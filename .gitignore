@@ -10,3 +10,4 @@ build/
 .bkit-memory.json
 .pdca-status.json
 .pdca-snapshots/
+.worktrees/
