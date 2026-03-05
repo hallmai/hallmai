@@ -1,167 +1,245 @@
-# hallmai — Family Care Dashboard (v0 Prompt)
+# hallmai — Family Care Dashboard Design Spec
 
 ## Project Overview
 
-**hallmai** (할마이) is an AI voice companion for elderly parents living alone. The AI talks to Mom daily through a simple one-button voice call. After each conversation, it automatically generates a "care card" summarizing her mood, what she talked about, and any health or emotional signals worth noting.
+**hallmai** (할마이) is an AI voice companion for elderly parents living alone. The AI talks to Mom daily through a simple one-button voice call. After each conversation, it automatically generates a "care card" summarizing her mood, what she talked about, and any health or emotional signals.
 
-This prompt is for the **family member's dashboard** — the screen a son or daughter checks to stay updated on Mom's daily well-being without having to call every single day.
-
-The name "hallmai" is a play on Korean "할머니" (grandma) and contains "LLM" and "AI" in it (ha-**llm**-**ai**).
+This spec covers the **family dashboard** — the read-only screen a child checks to stay updated on Mom's well-being.
 
 ---
 
-## Design Philosophy
+## Design System
 
-### Overall Feeling
-- **Apple Health inspired** — clean, minimal, generous whitespace, bold typography
-- **Warm but not cluttered** — warm cream background with restrained accent colors
-- **Read-only dashboard** — family just reads, no action buttons needed
-- The design should make you feel informed and reassured, not anxious
+### Color Palette
 
-### Visual Direction
-- **Color palette:**
-  - Background: warm cream `#FFF8F0`
-  - Primary accent: soft coral `#E8725C` (brand, voice player, tags)
-  - Good/positive: emerald `#34d399`
-  - Neutral/okay: amber `#fbbf24`
-  - Concerning/low: red `#f87171`
-  - Text: stone tones (`stone-800` for headings, `stone-400` for secondary)
-  - Cards: pure white `#ffffff` with 0.5px border (no heavy shadows)
-- **Typography:** Inter font, font-black (900) for numbers/titles, generous tracking-tight. Clean hierarchy: 28/17/15/14/13/11/10px
-- **Border radius:** 16px for cards, full-round for badges and pills
-- **Shadows:** Minimal — prefer thin borders over shadows
-- **Spacing:** Tight 16px gap between sections. Dense but readable
-- **No dark mode** — always warm and bright
+| Token | Value | Usage |
+|---|---|---|
+| Background | `#FFF8F0` | Page background, warm cream |
+| White | `#ffffff` | Card backgrounds |
+| Coral | `#E8725C` | Brand accent, CTA, active states, voice player |
+| Coral dark | `#d4614d` | Gradient end for coral sections |
+| Good | `#34d399` | Positive mood indicator (emerald) |
+| Okay | `#fbbf24` | Neutral mood indicator (amber) |
+| Low | `#f87171` | Concerning mood indicator (red) |
+| Text primary | `stone-800` | Headings, important text |
+| Text secondary | `stone-600` | Body text |
+| Text tertiary | `stone-400` / `stone-500` | Labels, captions, metadata |
+| Dark bg | `stone-800` → `stone-900` gradient | Dark sections (VoiceSummary) |
+| Dark text | `stone-300` | Text on dark backgrounds |
+| Dark muted | `stone-500` | Labels on dark backgrounds |
+| Alert bg | `red-50` | Alert banner background |
+| Alert border | `red-100/60` | Alert banner border |
 
-### Layout
-- **Mobile-first**: max-width 430px, centered on larger screens
-- Compact sticky header (48px height)
-- Single scrollable page, no tabs or complex navigation
-- Bottom tab bar with 2 items: "Updates" (active) and "Settings"
-- Language toggle (EN/KO) in header
+### Typography
+
+- **Font**: Inter (system-ui fallback)
+- **Smoothing**: antialiased
+- **Scale** (all in px):
+
+| Size | Weight | Usage |
+|---|---|---|
+| 28px | font-black (900) | Page title, stat values |
+| 20px | font-bold (700) | Voice summary title |
+| 17px | font-semibold (600) | Quote text (if used) |
+| 15px | font-bold (700) | Section card titles |
+| 14px | normal | Card body text, list items |
+| 13px | normal / medium | Subtitle, alert detail, body |
+| 12px | medium / mono | Date labels, duration |
+| 11px | font-bold / semibold | Section sub-labels, legend |
+| 10px | font-bold | Section labels (uppercase, tracking-[0.15em] or tracking-widest) |
+
+### Spacing & Layout
+
+- **Page max-width**: 430px, centered
+- **Page padding**: `px-5` (20px sides)
+- **Section gap**: `space-y-4` (16px) in card area
+- **Card padding**: `p-5` (20px)
+- **Border radius**: `rounded-2xl` (16px) for all cards
+
+### Card Styles
+
+**White card (`.card` class)**:
+```css
+background: #ffffff;
+border-radius: 16px;
+box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+```
+- No heavy shadows. Thin 0.5px border simulates card edge.
+- Used by: StatsRow, MoodChart
+
+**Dark card**:
+```
+rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-5
+```
+- Used by: VoiceSummary
+- Text: white for primary, stone-300 for body, stone-500 for labels
+- Accent elements in coral `#E8725C`
+
+**Coral gradient card**:
+```
+rounded-2xl bg-gradient-to-br from-[#E8725C] via-[#e06a52] to-[#cf5a44] p-6
+```
+- Used by: WeeklyInsight
+- Text: white, opacity for secondary text
+- Decorative: semi-transparent white circles (`bg-white/[0.06]`)
+
+**Alert card**:
+```
+rounded-2xl bg-red-50 border border-red-100/60 px-4 py-3.5
+```
+- Used by: AlertBanner
+- Text: `red-700` for title, `red-500` for detail
+- Pulsing red dot animation
+
+### Interactions
+
+**Pressable**:
+```css
+.pressable {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.pressable:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+```
+
+**Animations**:
+- `waveform`: bar height oscillation for voice player (0.5-1.2s, ease-in-out, infinite)
+- `pulse-dot`: scale 1→1.3 + opacity fade for alert indicator (2s, ease-in-out, infinite)
+
+### Section Label Pattern
+
+Recurring pattern for section headers:
+```
+text-[10px] or text-[11px]
+font-bold
+text-stone-400 or text-stone-500
+uppercase
+tracking-[0.15em] or tracking-widest
+```
+Often paired with a small colored icon (coral for branded sections).
+
+---
+
+## Visual Rhythm
+
+Sections alternate between different visual treatments to avoid monotony:
+
+```
+Title          → plain text on page background (#FFF8F0)
+Alert Banner   → red-50 tinted card
+VoiceSummary   → DARK (stone-800/900 gradient)
+Stats Row      → WHITE cards (3-column grid)
+MoodChart      → WHITE card
+WeeklyInsight  → CORAL gradient card
+CareCards      → NO card — timeline on page background
+```
+
+**Rules**:
+- Never stack 3+ white cards without a visual break
+- Dark and coral sections provide contrast anchors
+- Timeline (CareCards) uses the page background, not cards
+- Alert only appears when needed, so it doesn't count as a permanent rhythm element
 
 ---
 
 ## Page Structure
 
-The page scrolls vertically with 16px gap between sections.
+### Mobile Frame
 
-### 1. Header
-- Compact 48px height, frosted glass effect
-- Left: "hallmai" brand text (16px, bold, tracking-tight)
-- Right: language toggle button (EN/KO) + profile icon
-- Minimal and clean
+- `h-dvh` full viewport height
+- Sticky header (48px, frosted glass `bg-[#FFF8F0]/80 backdrop-blur-xl`)
+- Scrollable `<main>` with `pb-24` for floating tab bar clearance
+- Floating tab bar (`absolute bottom-5 left-5 right-5`, rounded-2xl, frosted glass, shadow)
 
-### 2. Title Area
-- Large heading: **"Mom's Well-being"** (28px, font-black)
-- Subtitle: "Summarized by hallmai" in stone-400
+### Header
 
-### 3. Alert Banner (Conditional)
-- Only appears when hallmai detects something concerning
-- Rounded card with `red-50/60` background
-- Left: small red circle with exclamation icon
-- Center: bold alert title + smaller detail text
-- No action button — read-only
-- Example: "Sleep issues detected" / "Mom mentioned trouble sleeping 2 nights this week"
+- Left: brand name "hallmai" / "할마이" (16px, bold)
+- Right: language toggle (EN/KO pill button) + profile icon (stone-100 circle)
 
-### 4. Voice Summary Player
-- **Podcast-style audio player** for yesterday's detailed summary
-- Header: microphone icon + "VOICE BRIEFING" label (uppercase, tracking-widest)
-- Title: "Yesterday's Summary" (17px, bold)
-- Duration display: "1:42"
-- Coral play/pause button (44px circle) + waveform visualization
-- Waveform: 32 bars with pseudo-random heights, fills with coral as progress advances
-- Animated bars when playing
-- Preview text: 2-line clamp of the summary content
-- Uses Web Speech API (TTS) for now, Gemini voice later
+### Floating Tab Bar
 
-### 5. Stats Row
-- 3 compact cards in a horizontal grid
-- Each card: large font-black value (28px) on top, small uppercase label below
-- Card 1: "12" — "days · Streak"
-- Card 2: "6" — "chats · This Week"
-- Card 3: "Good" emoji — "good · Avg Mood"
-
-### 6. Weekly Mood Chart
-- White card with 0.5px border
-- Header: "Weekly Mood" (15px, bold) left, date range right
-- Bar chart using simple divs (NO chart libraries)
-- 7 bars for Mon–Sun, rounded-md tops
-- Bar colors: emerald for good, amber for okay, red for low
-- Day labels below each bar
-- Legend with square color indicators
-
-### 7. Weekly Insight Card
-- White card (NOT gradient — Apple Health style)
-- Header: "Weekly Insight" (15px, bold) left, "by hallmai" right
-- Body: 2-3 sentences of AI-generated insight in stone-500
-- Bottom: coral-tinted tags in `coral/8` background pills
-
-### 8. Daily Care Cards
-- Section header: "DAILY UPDATES" (11px, uppercase, tracking-widest)
-- Vertical list of cards with 12px gap
-
-**Each care card:**
-- Header: date (12px, stone-400) left, mood badge right
-  - Mood badges: emoji + label in colored pill
-- Summary: 14px, stone-600, relaxed line-height
-- Alert tags (optional): small red pills with dot indicator
-- **No reply section** — dashboard is read-only
-
-### 9. Bottom Tab Bar
-- 2 tabs: Updates (heart icon, coral, filled) + Settings (gear icon, stone-300, outlined)
-- Frosted glass background
+```
+absolute bottom-5 left-5 right-5 z-50
+rounded-2xl bg-[#FFF8F0]/80 backdrop-blur-xl
+shadow-lg shadow-stone-900/[0.08]
+border border-stone-200/40
+```
+- 2 tabs: Updates (heart, coral, filled) + Settings (gear, stone-300, outlined)
+- Apple iOS style: detached from edges, rounded, floating
 
 ---
 
-## Mock Data
+## Sections (Top to Bottom)
 
-**Stats:** 12-day streak, 6 chats this week, average mood Good
+### 1. Title + Subtitle
+- `px-5 pt-2 pb-1`
+- Title: 28px, font-black, stone-800
+- Subtitle: 13px, stone-400
 
-**Alert:** Sleep issues detected — Mom mentioned trouble sleeping 2 nights this week
+### 2. Alert Banner
+- `px-5 pt-3`
+- Conditional — only shown when AI detects concerning signals
+- Pulsing red dot + bold title + detail text + chevron arrow
+- Read-only, no action
 
-**Weekly Mood (Mon-Sun):** Good, Okay, Good, Low, Good, Okay, Good
+### 3. Voice Summary (Dark Hero)
+- `px-5 pt-4`
+- Dark gradient card with podcast-style audio player
+- Microphone icon + "VOICE BRIEFING" uppercase label
+- Title: "Yesterday's Summary" (20px, bold, white)
+- Duration: monospace "1:42"
+- Play/pause: 48px coral circle with shadow glow (`shadow-[#E8725C]/20`)
+- Waveform: 40 bars, pseudo-random heights via `Math.sin`, fill coral as progress advances
+- Animated bars while playing (individual delays for wave effect)
+- 2-line preview text in stone-500
 
-**Weekly Insight:** "Mom had a great week overall. She went on walks 4 times and cooked for herself every day. She mentioned feeling lonely on Thursday — a quick call would brighten her day."
-Tags: Active, Mild loneliness, Good appetite
+### 4. Stats Row
+- `space-y-4` starts here
+- 3-column grid, each cell is a `.card`
+- Each: large value (28px, font-black) + small uppercase label (10px, stone-400)
+- Values: streak days, weekly chat count, average mood emoji
 
-**Voice Summary:** Detailed audio briefing of yesterday's conversation (1:42 duration)
+### 5. Mood Chart
+- White `.card` with `p-5`
+- Header: "Weekly Mood" left, date range right
+- 7 slim bars (`w-3 rounded-full`) for Mon-Sun
+- Bar heights proportional to mood score
+- Today's bar has glow: `boxShadow: 0 0 8px {color}60`
+- Color-coded: emerald/amber/red
+- Legend below with small dots
 
-**Care Cards:**
+### 6. Weekly Insight (Coral Card)
+- Coral gradient with decorative white circles
+- Header: "Weekly Insight" left, "by hallmai" right
+- Body: 14px, white, opacity-90, relaxed line-height
+- Tags: `bg-white/15` rounded pills
 
-1. Today · Mar 5 | Good
-   "Mom went for a walk with her neighbor Sunja. The warm weather put her in a great mood."
-
-2. Yesterday · Mar 4 | Okay
-   "An old song on TV reminded her of Dad. She made doenjang-jjigae for dinner."
-   Alerts: Loneliness
-
-3. Mar 3 | Good
-   "She asked for photos of the grandkids. Been keeping up with her daily walks."
-
-4. Mar 2 | Low
-   "Had trouble sleeping last night. Otherwise a quiet day at home."
-   Alerts: Sleep, Low mood
+### 7. Daily Care Cards (Timeline)
+- Section label: "DAILY UPDATES" (11px, uppercase, tracking-widest)
+- Timeline layout: colored mood dot + vertical connecting line on left, content on right
+- Mood dot: `w-3 h-3 rounded-full` with `ring-4 ring-[#FFF8F0]` (matches page bg)
+- Connecting line: `w-[1.5px] bg-stone-200` (hidden on last card via `isLast` prop)
+- Content: date + mood emoji/label, summary text, optional red alert pills
+- No card background — sits directly on page background
 
 ---
 
-## Technical Requirements
+## i18n
 
-- **Framework:** Next.js App Router with TypeScript
-- **Styling:** Tailwind CSS v4 only — no external UI libraries, no external chart libraries
-- **Charts:** Build the bar chart with simple styled divs
-- **Interactivity:** Voice player with play/pause and progress (client component), language toggle (EN/KO)
-- **i18n:** Client-side context + dictionary approach (Korean default, English toggle)
-- **Mobile-first:** max-width 430px centered, use `h-dvh` for viewport height
-- **Structure:** Shared layout wrapper component for the mobile frame (sticky header, scrollable content area, bottom tab bar)
+- Client-side React Context with dictionary approach
+- Two locales: `ko` (default), `en`
+- Toggle button in header
+- All visible text goes through `t.keyName`
+- Dictionary type: `Record<DictionaryKey, string>`
 
 ---
 
-## What Makes This Design Stand Out
+## Technical Stack
 
-1. **Voice-first briefing** — hear yesterday's summary as a podcast, not just read cards
-2. **Apple Health clarity** — clean, dense, information-rich without clutter
-3. **Signal without noise** — alerts at the very top, mood trends at a glance
-4. **Zero-action dashboard** — family just opens and reads, no buttons to press
-5. **AI personality** — the weekly insight card gives hallmai a warm, caring voice
-6. **Bilingual** — seamless EN/KO toggle for international families
+- Next.js App Router + TypeScript
+- Tailwind CSS v4 (no external UI libraries)
+- No chart libraries — all visualizations built with styled divs
+- CSS animations only (no framer-motion)
+- Mobile-first, single-page scroll
