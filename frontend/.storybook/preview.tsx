@@ -1,11 +1,14 @@
 import type { Preview } from '@storybook/nextjs-vite'
 import { I18nProvider } from '../src/lib/i18n'
-import { createElement } from 'react'
 import '../src/app/globals.css'
 
 const preview: Preview = {
   decorators: [
-    (Story) => createElement(I18nProvider, null, createElement(Story)),
+    (Story) => (
+      <I18nProvider>
+        <Story />
+      </I18nProvider>
+    ),
   ],
   parameters: {
     layout: 'centered',
