@@ -11,7 +11,7 @@ export default function SettingsPage() {
       <div className="relative flex w-full max-w-[430px] flex-col h-dvh bg-[#FFF8F0]">
         {/* Header */}
         <header className="flex items-center justify-between px-5 h-14 border-b border-stone-200/40">
-          <Link href="/call" className="text-[14px] text-[#E8725C] font-medium">
+          <Link href="/demo/call" className="text-[14px] text-[#E8725C] font-medium">
             &larr; {t.settingsBack}
           </Link>
           <span className="text-[16px] font-bold text-stone-800">{t.settingsTitle}</span>
