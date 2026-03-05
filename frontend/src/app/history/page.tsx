@@ -70,6 +70,47 @@ export default function HistoryPage() {
           </button>
         </header>
 
+        {/* Month summary */}
+        <div className="px-5 pb-4">
+          <div
+            className="rounded-2xl p-4 flex items-center gap-4"
+            style={{ background: "#FFFCF8", boxShadow: "0 4px 20px rgba(61,43,31,0.07)" }}
+          >
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "#FFE8D6" }}
+            >
+              <span className="material-symbols-outlined fill-icon" style={{ color: "#E8945C", fontSize: "24px" }}>
+                calendar_month
+              </span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold" style={{ color: "#3D2B1F" }}>10월 요약</p>
+              <p className="text-xs mt-0.5" style={{ color: "#8B7262" }}>대화 14일 완료 · 평균 기분 😊</p>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#E8F5E9", color: "#4CAF50" }}>
+                안정적
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Month filter */}
+        <div className="px-5 pb-4 flex gap-2 overflow-x-auto scrollbar-hide">
+          {["10월", "9월", "8월", "7월"].map((m, i) => (
+            <button
+              key={m}
+              className="px-4 py-2 rounded-full text-sm font-semibold shrink-0"
+              style={i === 0
+                ? { background: "#E8945C", color: "#fff" }
+                : { background: "#FFFCF8", color: "#8B7262", border: "1px solid rgba(61,43,31,0.1)" }}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+
         {/* Timeline */}
         <main className="flex-1 px-5 pb-6 overflow-y-auto scrollbar-hide">
           <div className="relative">
