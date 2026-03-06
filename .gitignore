@@ -5,6 +5,8 @@ node_modules/
 .next/
 out/
 build/
+dist/
+package-lock.json
 .vercel
 *.tsbuildinfo
 .bkit-memory.json

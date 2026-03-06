@@ -149,7 +149,7 @@ export default function CallPage() {
 
         {/* Settings — small gear, top right */}
         <Link
-          href="/demo/settings"
+          href="/settings"
           className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full"
         >
           <svg className="w-4 h-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

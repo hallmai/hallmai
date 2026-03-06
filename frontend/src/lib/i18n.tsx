@@ -84,6 +84,9 @@ const dictionaries = {
     settingsSchedule: "Daily call time",
     settingsFamily: "Family dashboard link",
     settingsFamilyCopy: "Copy link",
+    weeklyCallDuration: "Weekly Conversation",
+    weeklyCallTotal: "Total this week",
+    weeklyCallUnit: "min",
   },
   ko: {
     brand: "\uD560\uB9C8\uC774",
@@ -164,6 +167,9 @@ const dictionaries = {
     settingsSchedule: "\uB9E4\uC77C \uC804\uD654 \uC2DC\uAC04",
     settingsFamily: "\uAC00\uC871 \uB300\uC2DC\uBCF4\uB4DC \uB9C1\uD06C",
     settingsFamilyCopy: "\uB9C1\uD06C \uBCF5\uC0AC",
+    weeklyCallDuration: "주간 대화 시간",
+    weeklyCallTotal: "이번 주 총",
+    weeklyCallUnit: "분",
   },
 } satisfies Record<string, Record<string, string>>;
 
