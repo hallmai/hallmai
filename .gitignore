@@ -9,7 +9,5 @@ dist/
 package-lock.json
 .vercel
 *.tsbuildinfo
-.bkit-memory.json
-.pdca-status.json
-.pdca-snapshots/
+.bkit/
 .worktrees/
