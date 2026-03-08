@@ -35,20 +35,19 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const url = new URL(req.url || '', `http://${req.headers.host}`)
     const token = url.searchParams.get('token')
 
-    if (!token) {
-      client.close(4001, 'Authentication required')
-      return
+    // JWT is optional: family members have it, seniors don't
+    if (token) {
+      try {
+        const payload = this.jwtService.verify(token)
+        ;(client as unknown as { userId: number }).userId = payload.sub
+        this.logger.debug('Client connected (authenticated)')
+      } catch {
+        client.close(4001, 'Invalid token')
+        return
+      }
+    } else {
+      this.logger.debug('Client connected (device mode)')
     }
-
-    try {
-      const payload = this.jwtService.verify(token)
-      ;(client as unknown as { userId: number }).userId = payload.sub
-    } catch {
-      client.close(4001, 'Invalid token')
-      return
-    }
-
-    this.logger.debug('Client connected (authenticated)')
 
     client.on('message', (raw: Buffer | string) => {
       try {
@@ -120,8 +119,11 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private async handleEnd(client: WebSocket): Promise<void> {
-    await this.endConversation(client)
-    this.voiceService.endSession(client)
+    try {
+      await this.endConversation(client)
+    } finally {
+      this.voiceService.endSession(client)
+    }
   }
 
   private async endConversation(client: WebSocket): Promise<void> {

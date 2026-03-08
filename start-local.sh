@@ -5,6 +5,12 @@
 
 set -euo pipefail
 
+# Kill existing dev servers
+echo "Killing existing servers..."
+lsof -ti :3000 -sTCP:LISTEN | xargs kill -9 2>/dev/null || true
+lsof -ti :4000 -sTCP:LISTEN | xargs kill -9 2>/dev/null || true
+sleep 0.5
+
 BACKEND_PID=""
 
 cleanup() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { useDevice } from "@/hooks/use-device";
@@ -10,7 +10,7 @@ export default function CallPage() {
   const { t } = useI18n();
   const { deviceUuid, loading } = useDevice();
   const { state, start, stop } = useVoice(deviceUuid);
-  const cycleRef = useRef(0);
+  const [cycle, setCycle] = useState(0);
 
   const handleTap = () => {
     if (loading) return;
@@ -18,7 +18,7 @@ export default function CallPage() {
       start();
     } else if (state === "listening" || state === "speaking") {
       stop();
-      cycleRef.current++;
+      setCycle((c) => c + 1);
     }
   };
 
@@ -69,7 +69,7 @@ export default function CallPage() {
 
           {/* Idle / Connecting breathing glow */}
           {(state === "idle" || state === "connecting") && (
-            <div key={`breathe-${cycleRef.current}`}>
+            <div key={`breathe-${cycle}`}>
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] rounded-full bg-[#E8725C]/[0.06] call-breathe" />
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full bg-[#E8725C]/[0.04] call-breathe"

@@ -1,8 +1,7 @@
 export class AudioPlayer {
   private audioContext: AudioContext | null = null
-  private queue: AudioBuffer[] = []
-  private currentSource: AudioBufferSourceNode | null = null
-  private isPlaying = false
+  private nextStartTime = 0
+  private sources: AudioBufferSourceNode[] = []
 
   private ensureContext(): AudioContext {
     if (!this.audioContext) {
@@ -22,51 +21,42 @@ export class AudioPlayer {
     const buffer = ctx.createBuffer(1, float32.length, 24000)
     buffer.getChannelData(0).set(float32)
 
-    this.queue.push(buffer)
-    if (!this.isPlaying) {
-      this.playNext()
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.connect(ctx.destination)
+
+    // Schedule seamlessly: if nextStartTime is in the past, start now
+    const now = ctx.currentTime
+    if (this.nextStartTime < now) {
+      this.nextStartTime = now
     }
+
+    source.start(this.nextStartTime)
+    this.nextStartTime += buffer.duration
+
+    source.onended = () => {
+      const idx = this.sources.indexOf(source)
+      if (idx !== -1) this.sources.splice(idx, 1)
+    }
+    this.sources.push(source)
   }
 
   interrupt(): void {
-    this.queue = []
-    if (this.currentSource) {
+    for (const source of this.sources) {
       try {
-        this.currentSource.stop()
+        source.stop()
       } catch {
         // already stopped
       }
-      this.currentSource = null
     }
-    this.isPlaying = false
+    this.sources = []
+    this.nextStartTime = 0
   }
 
   destroy(): void {
     this.interrupt()
     this.audioContext?.close()
     this.audioContext = null
-  }
-
-  private playNext(): void {
-    if (!this.audioContext || this.queue.length === 0) {
-      this.isPlaying = false
-      return
-    }
-
-    this.isPlaying = true
-    const buffer = this.queue.shift()!
-
-    const source = this.audioContext.createBufferSource()
-    source.buffer = buffer
-    source.connect(this.audioContext.destination)
-
-    source.onended = () => {
-      this.currentSource = null
-      this.playNext()
-    }
-
-    this.currentSource = source
-    source.start()
   }
 }
 

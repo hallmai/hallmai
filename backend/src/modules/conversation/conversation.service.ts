@@ -42,8 +42,7 @@ export class ConversationService {
     return this.conversationRepository.find({
       where: {
         deviceId,
-        startedAt: Between(start, end),
-        endedAt: Between(start, end)
+        startedAt: Between(start, end)
       }
     })
   }

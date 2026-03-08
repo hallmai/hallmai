@@ -27,16 +27,16 @@ export default function RegisterPage() {
   const router = useRouter();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("pendingGoogleIdToken");
+  });
 
   useEffect(() => {
-    const token = sessionStorage.getItem("pendingGoogleIdToken");
-    if (!token) {
+    if (!pendingToken) {
       router.replace("/login");
-      return;
     }
-    setPendingToken(token);
-  }, [router]);
+  }, [pendingToken, router]);
 
   const allChecked = AGREEMENTS.every((a) => checked[a.key]);
   const requiredChecked = AGREEMENTS.filter((a) => a.required).every((a) => checked[a.key]);

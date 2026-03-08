@@ -13,7 +13,13 @@ export class DeviceService {
     private readonly deviceRepository: Repository<Device>
   ) {}
 
-  async register(deviceUuid: string) {
+  async register(
+    deviceUuid: string,
+    retryCount = 0
+  ): Promise<
+    | { linked: true; nickname: string | null; linkedAt: Date }
+    | { linked: false; code: string; expiresAt: Date }
+  > {
     let device = await this.deviceRepository.findOneBy({ deviceUuid })
 
     // 이미 연결된 디바이스면 연결 정보 반환
@@ -44,7 +50,17 @@ export class DeviceService {
 
     device.linkCode = this.generateCode()
     device.linkCodeExpiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30분
-    await this.deviceRepository.save(device)
+    try {
+      await this.deviceRepository.save(device)
+    } catch (error) {
+      if (
+        (error as { code?: string }).code === 'ER_DUP_ENTRY' &&
+        retryCount < 3
+      ) {
+        return this.register(deviceUuid, retryCount + 1)
+      }
+      throw error
+    }
 
     return {
       linked: false,

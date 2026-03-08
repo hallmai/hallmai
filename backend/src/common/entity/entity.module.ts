@@ -17,7 +17,7 @@ import { entities } from './entity.providers'
         username: config.get<string>('DB_USERNAME'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_DATABASE'),
-        synchronize: config.get<string>('NODE_ENV') !== 'production',
+        synchronize: config.get<string>('NODE_ENV') === 'development',
         timezone: '+09:00',
         dateStrings: ['DATE'],
         entities,
