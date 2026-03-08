@@ -35,7 +35,7 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
   };
 
   const handleManualSubmit = () => {
-    if (manualCode.length !== 6) return;
+    if (manualCode.length < 4) return;
     handleLink(manualCode);
   };
 
@@ -104,10 +104,10 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
 
       <input
         type="text"
-        maxLength={6}
+        maxLength={8}
         value={manualCode}
         onChange={(e) => setManualCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-        placeholder="ABC123"
+        placeholder="AB12"
         className="w-full max-w-[240px] h-14 text-center text-2xl font-bold tracking-[0.3em] rounded-2xl bg-white border border-stone-200 text-stone-800 outline-none focus:ring-2 focus:ring-[#E8725C]/30 placeholder:text-2xl placeholder:tracking-[0.3em] placeholder:font-bold placeholder:text-stone-200"
         autoFocus
       />
@@ -116,7 +116,7 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
 
       <button
         onClick={handleManualSubmit}
-        disabled={manualCode.length !== 6 || loading}
+        disabled={manualCode.length < 4 || loading}
         className="mt-6 w-full max-w-[240px] h-12 rounded-2xl bg-coral text-white font-bold pressable disabled:opacity-40"
       >
         {loading ? (

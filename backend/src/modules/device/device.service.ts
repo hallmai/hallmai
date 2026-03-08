@@ -48,7 +48,7 @@ export class DeviceService {
       }
     }
 
-    device.linkCode = this.generateCode()
+    device.linkCode = await this.generateUniqueCode()
     device.linkCodeExpiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30분
     try {
       await this.deviceRepository.save(device)
@@ -127,10 +127,33 @@ export class DeviceService {
     })
   }
 
-  private generateCode(): string {
+  private async generateUniqueCode(): Promise<string> {
+    const maxAttempts = 5
+    let length = 4
+
+    for (;;) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const code = this.generateCode(length)
+        const existing = await this.deviceRepository.findOneBy({
+          linkCode: code
+        })
+        if (
+          !existing ||
+          (existing.linkCodeExpiresAt &&
+            existing.linkCodeExpiresAt < new Date())
+        ) {
+          return code
+        }
+      }
+      // All attempts at this length collided — expand
+      length++
+    }
+  }
+
+  private generateCode(length: number): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 혼동 문자 제외 (0/O, 1/I)
     let code = ''
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < length; i++) {
       code += chars[randomInt(chars.length)]
     }
     return code

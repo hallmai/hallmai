@@ -8,7 +8,7 @@ import { useVoice } from "@/hooks/use-voice";
 
 export default function CallPage() {
   const { t } = useI18n();
-  const { deviceUuid, loading } = useDevice();
+  const { deviceUuid, linkCode, linked, loading } = useDevice();
   const { state, start, stop } = useVoice(deviceUuid);
   const [cycle, setCycle] = useState(0);
 
@@ -43,10 +43,10 @@ export default function CallPage() {
   return (
     <div className="flex h-dvh justify-center bg-[#f2f1ef]">
       <div className="relative flex w-full max-w-[430px] flex-col items-center justify-center h-dvh bg-[#FFF8F0]">
-        {/* Device UUID indicator */}
-        {deviceUuid && (
-          <span className="absolute top-5 left-5 text-[10px] font-mono text-stone-300">
-            {deviceUuid.substring(0, 8).toUpperCase()}
+        {/* Link code indicator (visible when not linked) */}
+        {linkCode && !linked && (
+          <span className="absolute top-5 left-5 text-[14px] font-mono font-bold text-stone-400 tracking-[0.15em]">
+            {linkCode}
           </span>
         )}
 

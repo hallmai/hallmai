@@ -4,6 +4,12 @@ import { useSyncExternalStore, useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { API_URL } from '@/lib/config'
 
+interface DeviceRegisterResponse {
+  data:
+    | { linked: true; nickname: string | null; linkedAt: string }
+    | { linked: false; code: string; expiresAt: string }
+}
+
 function getOrCreateDeviceUuid(): string {
   const stored = localStorage.getItem('seniorDeviceUuid')
   if (stored) return stored
@@ -27,6 +33,8 @@ function subscribe(): () => void {
 
 export function useDevice() {
   const [loading, setLoading] = useState(true)
+  const [linkCode, setLinkCode] = useState<string | null>(null)
+  const [linked, setLinked] = useState(false)
   const deviceUuid = useSyncExternalStore(subscribe, getDeviceUuidSnapshot, getServerSnapshot)
 
   useEffect(() => {
@@ -38,9 +46,18 @@ export function useDevice() {
       body: JSON.stringify({ deviceUuid }),
     })
       .then((res) => res.json())
-      .then(() => setLoading(false))
+      .then((json: DeviceRegisterResponse) => {
+        if (json.data.linked) {
+          setLinked(true)
+          setLinkCode(null)
+        } else {
+          setLinked(false)
+          setLinkCode(json.data.code)
+        }
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [deviceUuid])
 
-  return { deviceUuid, loading }
+  return { deviceUuid, linkCode, linked, loading }
 }
