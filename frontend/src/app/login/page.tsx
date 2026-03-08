@@ -2,6 +2,7 @@
 
 import AppShell from "@/components/app-shell";
 import { apiGoogleLogin, saveAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { useGoogleLogin } from "@react-oauth/google";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import { useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,13 +32,13 @@ export default function LoginPage() {
         saveAuth(result);
         router.push("/dashboard");
       } catch {
-        setError("로그인에 실패했습니다. 다시 시도해주세요.");
+        setError(t.loginError);
       } finally {
         setLoading(false);
       }
     },
     onError: () => {
-      setError("Google 로그인에 실패했습니다.");
+      setError(t.loginGoogleError);
     },
   });
 
@@ -45,7 +47,7 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         <div className="flex flex-col items-center mb-16">
           <Image src="/logo.png" alt="hallmai" width={240} height={160} priority />
-          <p className="text-stone-400 text-sm mt-1">AI가 챙기는 우리 엄마 안부</p>
+          <p className="text-stone-400 text-sm mt-1">{t.loginTagline}</p>
         </div>
 
         <button
@@ -60,7 +62,7 @@ export default function LoginPage() {
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           </svg>
           <span className="text-sm font-semibold text-stone-700">
-            {loading ? "로그인 중..." : "Google로 시작하기"}
+            {loading ? t.loginLoading : t.loginButton}
           </span>
         </button>
 

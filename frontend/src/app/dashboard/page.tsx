@@ -69,7 +69,7 @@ export default function DashboardPage() {
               onClick={() => setShowLinkPrompt(false)}
               className="text-[14px] text-[#E8725C] font-medium"
             >
-              &larr; 돌아가기
+              &larr; {t.settingsBack}
             </button>
           </div>
         )}
