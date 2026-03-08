@@ -72,19 +72,19 @@ export default function SettingsPage() {
           {/* Legal Links */}
           <div className="card overflow-hidden">
             <Link href="/terms" className="flex items-center justify-between px-4 py-3.5 border-b border-stone-100">
-              <span className="text-[14px] text-stone-700">서비스 이용약관</span>
+              <span className="text-[14px] text-stone-700">{t.settingsTerms}</span>
               <svg className="w-4 h-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </Link>
             <Link href="/privacy" className="flex items-center justify-between px-4 py-3.5 border-b border-stone-100">
-              <span className="text-[14px] text-stone-700">개인정보 처리방침</span>
+              <span className="text-[14px] text-stone-700">{t.settingsPrivacy}</span>
               <svg className="w-4 h-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </Link>
             <Link href="/marketing-terms" className="flex items-center justify-between px-4 py-3.5">
-              <span className="text-[14px] text-stone-700">마케팅 수신 동의</span>
+              <span className="text-[14px] text-stone-700">{t.settingsMarketing}</span>
               <svg className="w-4 h-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
@@ -96,7 +96,7 @@ export default function SettingsPage() {
             onClick={handleLogout}
             className="w-full py-3.5 rounded-2xl border border-stone-200 text-[14px] font-semibold text-stone-500 pressable"
           >
-            로그아웃
+            {t.settingsLogout}
           </button>
         </div>
       </div>

@@ -59,7 +59,7 @@ export class LoggerService {
     })
   }
 
-  private filterParams(params: any): string {
+  private filterParams(params: unknown): string {
     const { expressLogParserOptions } = this.loggerModuleOptions
     let str: string = ''
     switch (typeof params) {
@@ -126,7 +126,7 @@ export class LoggerService {
 
   makeResponseLogData(
     status: number,
-    responseBody: any
+    responseBody: unknown
   ): ExpressResponseLogFormat {
     const { expressLogParserOptions } = this.loggerModuleOptions
     const bodyString = this.filterParams(responseBody)

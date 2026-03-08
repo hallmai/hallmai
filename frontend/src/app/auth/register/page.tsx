@@ -2,25 +2,28 @@
 
 import AppShell from "@/components/app-shell";
 import { apiGoogleRegister, saveAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import type { DictionaryKey } from "@/lib/i18n";
 
 interface AgreementItem {
   key: string;
-  label: string;
+  labelKey: DictionaryKey;
   required: boolean;
   href: string;
 }
 
 const AGREEMENTS: AgreementItem[] = [
-  { key: "terms", label: "서비스 이용약관", required: true, href: "/terms" },
-  { key: "privacy", label: "개인정보 처리방침", required: true, href: "/privacy" },
-  { key: "marketing", label: "마케팅 수신 동의", required: false, href: "/marketing-terms" },
+  { key: "terms", labelKey: "settingsTerms", required: true, href: "/terms" },
+  { key: "privacy", labelKey: "settingsPrivacy", required: true, href: "/privacy" },
+  { key: "marketing", labelKey: "settingsMarketing", required: false, href: "/marketing-terms" },
 ];
 
 export default function RegisterPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,8 +72,8 @@ export default function RegisterPage() {
       <div className="flex-1 flex items-center justify-center">
         <div className="flex w-full max-w-sm flex-col items-center px-8 py-16">
           <Image src="/logo.png" alt="hallmai" width={120} height={80} className="mb-6" />
-          <h1 className="text-xl font-bold text-stone-800">회원가입</h1>
-          <p className="mt-2 text-sm text-stone-400">약관에 동의하고 시작하세요</p>
+          <h1 className="text-xl font-bold text-stone-800">{t.registerTitle}</h1>
+          <p className="mt-2 text-sm text-stone-400">{t.registerSubtitle}</p>
 
           {/* 전체 동의 */}
           <button
@@ -88,7 +91,7 @@ export default function RegisterPage() {
                 </svg>
               )}
             </span>
-            <span className="text-sm font-semibold text-stone-800">전체 동의</span>
+            <span className="text-sm font-semibold text-stone-800">{t.registerAgreeAll}</span>
           </button>
 
           {/* 개별 약관 */}
@@ -109,9 +112,9 @@ export default function RegisterPage() {
                       )}
                     </span>
                     <span className="text-sm text-stone-600">
-                      {a.label}
+                      {t[a.labelKey]}
                       <span className={a.required ? "ml-1 text-[#E8725C]" : "ml-1 text-stone-400"}>
-                        ({a.required ? "필수" : "선택"})
+                        ({a.required ? t.registerRequired : t.registerOptional})
                       </span>
                     </span>
                   </button>
@@ -123,7 +126,7 @@ export default function RegisterPage() {
                 </div>
                 {a.key === "marketing" && (
                   <p className="px-4 pl-12 text-xs leading-relaxed text-stone-400">
-                    꼭 필요한 소식만 드리며, 언제든 설정에서 해제할 수 있어요.
+                    {t.registerMarketingDesc}
                   </p>
                 )}
               </div>
@@ -139,10 +142,10 @@ export default function RegisterPage() {
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                가입 중...
+                {t.registerSubmitting}
               </span>
             ) : (
-              "가입하기"
+              t.registerSubmit
             )}
           </button>
         </div>

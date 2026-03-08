@@ -23,17 +23,17 @@ export interface LogData {
   req?: Request
   res?: {
     status: number
-    responseBody: any
+    responseBody: unknown
     responseTime: number
   }
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface ExpressRequestLogFormat {
   originalUrl: string
   method: string
   headers: IncomingHttpHeaders
-  body: any
+  body: unknown
   ip: string
   query: ParsedQs
 }

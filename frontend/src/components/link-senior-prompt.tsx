@@ -1,11 +1,13 @@
 "use client";
 
 import { linkDevice } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { useState } from "react";
 
 type Step = "nickname" | "link";
 
 export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void }) {
+  const { t } = useI18n();
   const [step, setStep] = useState<Step>("nickname");
   const [nickname, setNickname] = useState("");
 
@@ -26,7 +28,7 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
       await linkDevice(code.toUpperCase(), nickname.trim());
       onLinked();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "연결에 실패했습니다");
+      setError(err instanceof Error ? err.message : t.linkFailed);
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
         </div>
 
         <h2 className="text-[22px] font-black text-stone-800 mb-8 animate-[fadeUp_0.6s_ease-out_0.4s_both]">
-          누구의 안부를 받을까요?
+          {t.linkNicknameTitle}
         </h2>
 
         <input
@@ -57,7 +59,7 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleNicknameNext()}
-          placeholder="어머니"
+          placeholder={t.linkNicknamePlaceholder}
           className="w-full max-w-[200px] pb-2 text-center text-[24px] font-bold bg-transparent border-b-2 border-stone-300 text-stone-800 outline-none focus:border-coral placeholder:text-stone-300 placeholder:font-light transition-colors animate-[fadeUp_0.6s_ease-out_0.8s_both]"
           autoFocus
         />
@@ -67,7 +69,7 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
             onClick={handleNicknameNext}
             className="h-12 px-8 rounded-2xl bg-coral text-white font-bold pressable shadow-lg shadow-[#E8725C]/20"
           >
-            다음
+            {t.linkNext}
           </button>
         </div>
       </div>
@@ -84,18 +86,20 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
       </div>
 
       <h2 className="text-xl font-bold text-stone-800 mb-1">
-        <span className="text-coral">{nickname}</span> 연결하기
+        <span className="text-coral">{nickname}</span> {t.linkConnect}
       </h2>
 
       <button
         onClick={() => setStep("nickname")}
         className="text-xs text-stone-400 underline underline-offset-4 mb-6"
       >
-        호칭 변경
+        {t.linkChangeNickname}
       </button>
 
       <p className="text-sm text-stone-400 text-center leading-relaxed mb-8">
-        {nickname}의 휴대폰 통화 화면 좌측 상단에<br />표시된 사용자 코드를 입력해주세요
+        {t.linkCodeDesc.split("\n").map((line, i) => (
+          <span key={i}>{i > 0 && <br />}{line.replace("{name}", nickname)}</span>
+        ))}
       </p>
 
       <input
@@ -118,15 +122,17 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
         {loading ? (
           <span className="flex items-center justify-center gap-2">
             <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            연결 중...
+            {t.linkConnecting}
           </span>
         ) : (
-          "연결하기"
+          t.linkConnect
         )}
       </button>
 
       <p className="mt-8 text-xs text-stone-300 text-center leading-relaxed">
-        {nickname}의 휴대폰에서 할마이 앱을 열면<br />통화 화면 좌측 상단에 코드가 표시됩니다
+        {t.linkCodeHint.split("\n").map((line, i) => (
+          <span key={i}>{i > 0 && <br />}{line.replace("{name}", nickname)}</span>
+        ))}
       </p>
     </div>
   );
