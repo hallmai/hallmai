@@ -38,7 +38,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         errorCode = this.mapStatusToErrorCode(status)
       }
     } else if (exception instanceof Error) {
-      message = exception.message
+      console.error('Unhandled exception:', exception)
+      message = 'Internal server error'
     }
 
     response.status(status).json({

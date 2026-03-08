@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common'
+import { Controller, Get, Param, ParseEnumPipe, Query } from '@nestjs/common'
 import { PostCategory } from '../../common/entity/post.entity'
 import { PostService } from './post.service'
 
@@ -7,7 +7,9 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Get('latest')
-  async findLatest(@Query('category') category: PostCategory) {
+  async findLatest(
+    @Query('category', new ParseEnumPipe(PostCategory)) category: PostCategory
+  ) {
     const post = await this.postService.findLatestByCategory(category)
     return {
       post: post

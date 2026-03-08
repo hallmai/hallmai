@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { randomInt } from 'crypto'
 import { IsNull, Not, Repository } from 'typeorm'
 import { Device } from '../../common/entity/device.entity'
 import { CustomHttpException } from '../../common/response/custom-http.exception'
@@ -114,7 +115,7 @@ export class DeviceService {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 혼동 문자 제외 (0/O, 1/I)
     let code = ''
     for (let i = 0; i < 6; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)]
+      code += chars[randomInt(chars.length)]
     }
     return code
   }

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4002";
+import { API_URL } from "./config";
 
 export async function apiGoogleLogin(code: string) {
   const res = await fetch(`${API_URL}/api/auth/google`, {
@@ -36,7 +36,15 @@ export async function apiGoogleRegister(idToken: string, marketingAgreed: boolea
   return data.data;
 }
 
-export function saveAuth(data: { accessToken: string; refreshToken: string; user: any }) {
+export interface AuthUser {
+  pid: string;
+  email: string;
+  name: string;
+  profileImage: string | null;
+  role: string;
+}
+
+export function saveAuth(data: { accessToken: string; refreshToken: string; user: AuthUser }) {
   localStorage.setItem("accessToken", data.accessToken);
   localStorage.setItem("refreshToken", data.refreshToken);
   localStorage.setItem("user", JSON.stringify(data.user));
@@ -50,4 +58,16 @@ export function clearAuth() {
 
 export function getAccessToken() {
   return localStorage.getItem("accessToken");
+}
+
+export function isTokenValid(): boolean {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return false;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
 }

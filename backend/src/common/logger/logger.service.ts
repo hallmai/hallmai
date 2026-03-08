@@ -21,6 +21,7 @@ export class LoggerService {
   ) {
     this.winstonLogger = new WinstonLogger(options.winstonLoggerOptions)
     this.loggerModuleOptions = Object.assign(
+      {},
       defaultExpressLogParserOptions,
       options
     )

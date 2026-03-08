@@ -5,17 +5,26 @@ import { useI18n } from "@/lib/i18n";
 import { clearAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+function getUserSnapshot(): { name: string; email: string; profileImage?: string } | null {
+  const raw = localStorage.getItem("user");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
+}
+
+const subscribeUser = () => () => {};
+const getServerUser = () => null;
 
 export default function SettingsPage() {
   const { t, locale, toggleLocale } = useI18n();
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string; email: string; profileImage?: string } | null>(null);
-
-  useEffect(() => {
-    const raw = localStorage.getItem("user");
-    if (raw) setUser(JSON.parse(raw));
-  }, []);
+  const user = useSyncExternalStore(subscribeUser, getUserSnapshot, getServerUser);
 
   const handleLogout = () => {
     clearAuth();

@@ -4,16 +4,22 @@ export class AudioPlayer {
   private currentSource: AudioBufferSourceNode | null = null
   private isPlaying = false
 
-  constructor() {
-    this.audioContext = new AudioContext({ sampleRate: 24000 })
+  private ensureContext(): AudioContext {
+    if (!this.audioContext) {
+      this.audioContext = new AudioContext({ sampleRate: 24000 })
+    }
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume()
+    }
+    return this.audioContext
   }
 
   enqueue(base64: string): void {
-    if (!this.audioContext) return
+    const ctx = this.ensureContext()
 
     const int16 = base64ToInt16(base64)
     const float32 = int16ToFloat32(int16)
-    const buffer = this.audioContext.createBuffer(1, float32.length, 24000)
+    const buffer = ctx.createBuffer(1, float32.length, 24000)
     buffer.getChannelData(0).set(float32)
 
     this.queue.push(buffer)

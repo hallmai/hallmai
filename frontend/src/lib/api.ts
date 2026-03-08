@@ -1,6 +1,5 @@
 import { getAccessToken } from "./auth";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4002";
+import { API_URL } from "./config";
 
 function authHeaders(): HeadersInit {
   const token = getAccessToken();

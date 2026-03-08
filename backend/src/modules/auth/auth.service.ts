@@ -46,7 +46,10 @@ export class AuthService {
   ): Promise<{ profile: GoogleProfile; idToken: string }> {
     try {
       const { tokens } = await this.googleClient.getToken(code)
-      const idToken = tokens.id_token!
+      if (!tokens.id_token) {
+        throw new UnauthorizedException('Google did not return id_token')
+      }
+      const idToken = tokens.id_token
       const profile = await this.verifyGoogleIdToken(idToken)
       return { profile, idToken }
     } catch (err) {
@@ -109,14 +112,7 @@ export class AuthService {
     authToken.lastActivatedAt = new Date()
     await this.authTokenRepository.save(authToken)
 
-    return {
-      accessToken: this.jwtService.sign({
-        sub: user.id,
-        pid: user.pid
-      } as JwtPayload),
-      refreshToken: authToken.refreshToken,
-      user: this.toUserResponse(user)
-    }
+    return this.issueTokens(user, authToken)
   }
 
   async register(idToken: string, marketingAgreed: boolean) {
@@ -128,18 +124,8 @@ export class AuthService {
       relations: ['user']
     })
     if (existing) {
-      existing.refreshToken = this.generateRefreshToken()
-      existing.expiredAt = this.getRefreshExpiry()
-      existing.lastActivatedAt = new Date()
-      await this.authTokenRepository.save(existing)
-      return {
-        accessToken: this.jwtService.sign({
-          sub: existing.user.id,
-          pid: existing.user.pid
-        } as JwtPayload),
-        refreshToken: existing.refreshToken,
-        user: this.toUserResponse(existing.user)
-      }
+      await this.rotateRefreshToken(existing)
+      return this.issueTokens(existing.user, existing)
     }
 
     const user = this.userRepository.create({
@@ -163,14 +149,7 @@ export class AuthService {
     })
     await this.authTokenRepository.save(authToken)
 
-    return {
-      accessToken: this.jwtService.sign({
-        sub: user.id,
-        pid: user.pid
-      } as JwtPayload),
-      refreshToken: authToken.refreshToken,
-      user: this.toUserResponse(user)
-    }
+    return this.issueTokens(user, authToken)
   }
 
   async refresh(refreshToken: string) {
@@ -195,16 +174,12 @@ export class AuthService {
       )
     }
 
-    const user = authToken.user
-    authToken.refreshToken = this.generateRefreshToken()
-    authToken.expiredAt = this.getRefreshExpiry()
-    authToken.lastActivatedAt = new Date()
-    await this.authTokenRepository.save(authToken)
+    await this.rotateRefreshToken(authToken)
 
     return {
       accessToken: this.jwtService.sign({
-        sub: user.id,
-        pid: user.pid
+        sub: authToken.user.id,
+        pid: authToken.user.pid
       } as JwtPayload),
       refreshToken: authToken.refreshToken
     }
@@ -214,6 +189,24 @@ export class AuthService {
     const user = await this.userRepository.findOneBy({ id: payload.sub })
     if (!user) throw new UnauthorizedException()
     return this.toUserResponse(user)
+  }
+
+  private issueTokens(user: User, authToken: AuthToken) {
+    return {
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        pid: user.pid
+      } as JwtPayload),
+      refreshToken: authToken.refreshToken,
+      user: this.toUserResponse(user)
+    }
+  }
+
+  private async rotateRefreshToken(authToken: AuthToken) {
+    authToken.refreshToken = this.generateRefreshToken()
+    authToken.expiredAt = this.getRefreshExpiry()
+    authToken.lastActivatedAt = new Date()
+    await this.authTokenRepository.save(authToken)
   }
 
   private toUserResponse(user: User) {

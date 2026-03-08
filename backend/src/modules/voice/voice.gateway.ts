@@ -1,10 +1,12 @@
 import { Logger } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway
 } from '@nestjs/websockets'
+import type { IncomingMessage } from 'http'
 import { Repository } from 'typeorm'
 import type WebSocket from 'ws'
 import { Device } from '../../common/entity/device.entity'
@@ -16,22 +18,37 @@ interface WsMessage {
   data?: Record<string, unknown>
 }
 
-// Track active conversation per client
-const clientConversations = new Map<WebSocket, number>()
-
 @WebSocketGateway({ path: '/ws/voice' })
 export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(VoiceGateway.name)
+  private readonly clientConversations = new Map<WebSocket, number>()
 
   constructor(
     private readonly voiceService: VoiceService,
     private readonly conversationService: ConversationService,
+    private readonly jwtService: JwtService,
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>
   ) {}
 
-  handleConnection(client: WebSocket): void {
-    this.logger.debug('Client connected')
+  handleConnection(client: WebSocket, req: IncomingMessage): void {
+    const url = new URL(req.url || '', `http://${req.headers.host}`)
+    const token = url.searchParams.get('token')
+
+    if (!token) {
+      client.close(4001, 'Authentication required')
+      return
+    }
+
+    try {
+      const payload = this.jwtService.verify(token)
+      ;(client as unknown as { userId: number }).userId = payload.sub
+    } catch {
+      client.close(4001, 'Invalid token')
+      return
+    }
+
+    this.logger.debug('Client connected (authenticated)')
 
     client.on('message', (raw: Buffer | string) => {
       try {
@@ -58,7 +75,7 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.handleStart(client, msg.data)
         break
       case 'audio':
-        await this.handleAudio(client, msg.data)
+        this.handleAudio(client, msg.data)
         break
       case 'end':
         await this.handleEnd(client)
@@ -89,7 +106,7 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Create conversation record
       const conversation = await this.conversationService.create(device.id)
-      clientConversations.set(client, conversation.id)
+      this.clientConversations.set(client, conversation.id)
     } catch (err) {
       this.logger.error(`Failed to start session: ${String(err)}`)
       this.send(client, 'error', { message: 'Failed to connect to AI' })
@@ -108,14 +125,14 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private async endConversation(client: WebSocket): Promise<void> {
-    const conversationId = clientConversations.get(client)
+    const conversationId = this.clientConversations.get(client)
     if (!conversationId) return
 
     const session = this.voiceService.getSession(client)
     const transcript = session?.transcript || null
 
     await this.conversationService.end(conversationId, transcript)
-    clientConversations.delete(client)
+    this.clientConversations.delete(client)
   }
 
   private send(

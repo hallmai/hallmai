@@ -96,9 +96,6 @@ export class ResponseInterceptor implements NestInterceptor {
         if (isIgnoreResponse) {
           return body
         }
-        if (res.statusCode === HttpStatus.CREATED) {
-          res.statusCode = HttpStatus.OK
-        }
         return { data: body }
       })
     )

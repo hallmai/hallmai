@@ -1,29 +1,10 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
-import { IsBoolean, IsNotEmpty, IsString } from 'class-validator'
 import { AuthService, JwtPayload } from './auth.service'
 import { CurrentUser } from './current-user.decorator'
+import { GoogleLoginDto } from './dto/google-login.dto'
+import { GoogleRegisterDto } from './dto/google-register.dto'
+import { RefreshDto } from './dto/refresh.dto'
 import { JwtAuthGuard } from './jwt-auth.guard'
-
-class GoogleLoginDto {
-  @IsString()
-  @IsNotEmpty()
-  code: string
-}
-
-class GoogleRegisterDto {
-  @IsString()
-  @IsNotEmpty()
-  idToken: string
-
-  @IsBoolean()
-  marketingAgreed: boolean
-}
-
-class RefreshDto {
-  @IsString()
-  @IsNotEmpty()
-  refreshToken: string
-}
 
 @Controller('auth')
 export class AuthController {

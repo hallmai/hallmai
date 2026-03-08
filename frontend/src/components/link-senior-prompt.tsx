@@ -25,8 +25,8 @@ export default function LinkSeniorPrompt({ onLinked }: { onLinked: () => void })
     try {
       await linkDevice(code.toUpperCase(), nickname.trim());
       onLinked();
-    } catch (err: any) {
-      setError(err.message || "연결에 실패했습니다");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "연결에 실패했습니다");
     } finally {
       setLoading(false);
     }

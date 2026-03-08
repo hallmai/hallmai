@@ -1,5 +1,7 @@
+import { getAccessToken } from './auth'
 import { AudioPlayer } from './audio-player'
 import { AudioRecorder } from './audio-recorder'
+import { API_URL } from './config'
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'ending'
 
@@ -19,13 +21,13 @@ export class VoiceClient {
   private player: AudioPlayer | null = null
   private state: VoiceState = 'idle'
   private handler: VoiceEventHandler
+  private disconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   private readonly wsUrl: string
 
   constructor(handler: VoiceEventHandler) {
     this.handler = handler
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    const wsBase = apiUrl.replace(/^http/, 'ws')
+    const wsBase = API_URL.replace(/^http/, 'ws')
     this.wsUrl = `${wsBase}/ws/voice`
   }
 
@@ -34,7 +36,9 @@ export class VoiceClient {
 
     this.setState('connecting')
 
-    this.ws = new WebSocket(this.wsUrl)
+    const token = getAccessToken()
+    const url = token ? `${this.wsUrl}?token=${encodeURIComponent(token)}` : this.wsUrl
+    this.ws = new WebSocket(url)
 
     this.ws.onopen = () => {
       this.send('start', { deviceUuid })
@@ -73,7 +77,7 @@ export class VoiceClient {
     this.send('end', {})
 
     // Give the server a moment to send 'ended', then force cleanup
-    setTimeout(() => {
+    this.disconnectTimer = setTimeout(() => {
       this.cleanup()
       this.setState('idle')
     }, 2000)
@@ -125,6 +129,10 @@ export class VoiceClient {
   }
 
   private cleanup(): void {
+    if (this.disconnectTimer) {
+      clearTimeout(this.disconnectTimer)
+      this.disconnectTimer = null
+    }
     this.recorder?.stop()
     this.recorder = null
     this.player?.destroy()
