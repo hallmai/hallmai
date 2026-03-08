@@ -27,6 +27,10 @@ export class AuthToken extends BaseEntity {
   @Column({ name: 'expired_at', type: 'datetime', nullable: true })
   expiredAt: Date | null
 
-  @Column({ name: 'last_activated_at', type: 'datetime', default: () => 'NOW()' })
+  @Column({
+    name: 'last_activated_at',
+    type: 'datetime',
+    default: () => 'NOW()'
+  })
   lastActivatedAt: Date
 }

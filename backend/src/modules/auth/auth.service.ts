@@ -41,7 +41,9 @@ export class AuthService {
     )
   }
 
-  private async exchangeGoogleCode(code: string): Promise<{ profile: GoogleProfile; idToken: string }> {
+  private async exchangeGoogleCode(
+    code: string
+  ): Promise<{ profile: GoogleProfile; idToken: string }> {
     try {
       const { tokens } = await this.googleClient.getToken(code)
       const idToken = tokens.id_token!
@@ -94,9 +96,11 @@ export class AuthService {
     }
 
     const user = authToken.user
-    if (profile.email && user.email !== profile.email) user.email = profile.email
+    if (profile.email && user.email !== profile.email)
+      user.email = profile.email
     if (profile.name && user.name !== profile.name) user.name = profile.name
-    if (profile.picture && user.profileImage !== profile.picture) user.profileImage = profile.picture
+    if (profile.picture && user.profileImage !== profile.picture)
+      user.profileImage = profile.picture
     await this.userRepository.save(user)
 
     authToken.providerDataJson = { ...profile }
@@ -106,7 +110,10 @@ export class AuthService {
     await this.authTokenRepository.save(authToken)
 
     return {
-      accessToken: this.jwtService.sign({ sub: user.id, pid: user.pid } as JwtPayload),
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        pid: user.pid
+      } as JwtPayload),
       refreshToken: authToken.refreshToken,
       user: this.toUserResponse(user)
     }
@@ -126,7 +133,10 @@ export class AuthService {
       existing.lastActivatedAt = new Date()
       await this.authTokenRepository.save(existing)
       return {
-        accessToken: this.jwtService.sign({ sub: existing.user.id, pid: existing.user.pid } as JwtPayload),
+        accessToken: this.jwtService.sign({
+          sub: existing.user.id,
+          pid: existing.user.pid
+        } as JwtPayload),
         refreshToken: existing.refreshToken,
         user: this.toUserResponse(existing.user)
       }
@@ -154,7 +164,10 @@ export class AuthService {
     await this.authTokenRepository.save(authToken)
 
     return {
-      accessToken: this.jwtService.sign({ sub: user.id, pid: user.pid } as JwtPayload),
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        pid: user.pid
+      } as JwtPayload),
       refreshToken: authToken.refreshToken,
       user: this.toUserResponse(user)
     }
@@ -167,11 +180,19 @@ export class AuthService {
     })
 
     if (!authToken) {
-      throw new CustomHttpException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED, '유효하지 않은 리프레시 토큰입니다')
+      throw new CustomHttpException(
+        HttpStatus.UNAUTHORIZED,
+        ErrorCode.UNAUTHORIZED,
+        '유효하지 않은 리프레시 토큰입니다'
+      )
     }
 
     if (authToken.expiredAt && authToken.expiredAt < new Date()) {
-      throw new CustomHttpException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED, '만료된 리프레시 토큰입니다')
+      throw new CustomHttpException(
+        HttpStatus.UNAUTHORIZED,
+        ErrorCode.UNAUTHORIZED,
+        '만료된 리프레시 토큰입니다'
+      )
     }
 
     const user = authToken.user
@@ -181,7 +202,10 @@ export class AuthService {
     await this.authTokenRepository.save(authToken)
 
     return {
-      accessToken: this.jwtService.sign({ sub: user.id, pid: user.pid } as JwtPayload),
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        pid: user.pid
+      } as JwtPayload),
       refreshToken: authToken.refreshToken
     }
   }

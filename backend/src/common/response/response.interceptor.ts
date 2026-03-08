@@ -44,12 +44,7 @@ export class ResponseInterceptor implements NestInterceptor {
 
     switch (context.getType()) {
       case 'http':
-        return this.handleHttp(
-          context,
-          next,
-          isIgnoreResponse,
-          isIgnoreLogging
-        )
+        return this.handleHttp(context, next, isIgnoreResponse, isIgnoreLogging)
       default:
         return next.handle()
     }

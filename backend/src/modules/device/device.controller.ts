@@ -8,7 +8,7 @@ import { DeviceService } from './device.service'
 class RegisterDeviceDto {
   @IsString()
   @IsNotEmpty()
-  deviceId: string
+  deviceUuid: string
 }
 
 class LinkDeviceDto {
@@ -28,7 +28,7 @@ export class DeviceController {
 
   @Post('register')
   async register(@Body() dto: RegisterDeviceDto) {
-    return this.deviceService.register(dto.deviceId)
+    return this.deviceService.register(dto.deviceUuid)
   }
 
   @Post('link')
@@ -49,7 +49,7 @@ export class DeviceController {
     return {
       devices: devices.map((d) => ({
         pid: d.pid,
-        deviceId: d.deviceId,
+        deviceUuid: d.deviceUuid,
         nickname: d.nickname,
         linkedAt: d.linkedAt
       }))

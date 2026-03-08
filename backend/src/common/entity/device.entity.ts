@@ -5,8 +5,8 @@ import { User } from './user.entity'
 @Entity('devices')
 export class Device extends BaseEntity {
   @Index({ unique: true })
-  @Column({ name: 'device_id', type: 'varchar', length: 255 })
-  deviceId: string
+  @Column({ name: 'device_uuid', type: 'varchar', length: 255 })
+  deviceUuid: string
 
   @Column({ name: 'nickname', type: 'varchar', length: 20, nullable: true })
   nickname: string | null

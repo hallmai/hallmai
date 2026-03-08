@@ -19,13 +19,17 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@google/genai": "^1.44.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-ws": "^11.1.16",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@nestjs/websockets": "^11.1.16",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "date-fns": "^4.1.0",
@@ -39,7 +43,8 @@
     "typeorm": "^0.3.28",
     "typeorm-transactional": "^0.5.0",
     "uuidv7": "^1.1.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -52,6 +57,7 @@
     "@types/node": "^22.10.7",
     "@types/passport": "^1.0.17",
     "@types/passport-jwt": "^4.0.1",
+    "@types/ws": "^8.18.1",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

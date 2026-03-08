@@ -3,10 +3,10 @@
 import { useI18n } from "@/lib/i18n";
 
 export interface CareCardProps {
-  dateKey: string;
+  date: string;
   mood: "good" | "okay" | "low";
-  summaryKey: string;
-  alertKeys?: string[];
+  summary: string;
+  quote?: string;
   isLast?: boolean;
 }
 
@@ -16,12 +16,8 @@ const moodColors = {
   low: "#f87171",
 };
 
-export default function CareCard({ dateKey, mood, summaryKey, alertKeys, isLast }: CareCardProps) {
+export default function CareCard({ date, mood, summary, quote, isLast }: CareCardProps) {
   const { t } = useI18n();
-
-  const date = (t as Record<string, string>)[dateKey] || dateKey;
-  const summary = (t as Record<string, string>)[summaryKey] || summaryKey;
-  const alerts = alertKeys?.map((key) => (t as Record<string, string>)[key] || key);
 
   const moodConfig = {
     good: { emoji: "\u{1F60A}", label: t.moodGood },
@@ -55,18 +51,10 @@ export default function CareCard({ dateKey, mood, summaryKey, alertKeys, isLast 
 
         <p className="text-[14px] leading-[1.7] text-stone-600">{summary}</p>
 
-        {alerts && alerts.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {alerts.map((alert) => (
-              <span
-                key={alert}
-                className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-semibold text-red-500"
-              >
-                <span className="w-1 h-1 rounded-full bg-red-400" />
-                {alert}
-              </span>
-            ))}
-          </div>
+        {quote && (
+          <p className="mt-2 text-[13px] leading-[1.6] text-stone-400 italic border-l-2 border-stone-200 pl-3">
+            &ldquo;{quote}&rdquo;
+          </p>
         )}
       </div>
     </div>

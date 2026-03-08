@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { EntityModule } from './common/entity/entity.module'
 import { LoggerModule } from './common/logger/logger.module'
 import { AuthModule } from './modules/auth/auth.module'
+import { ConversationModule } from './modules/conversation/conversation.module'
 import { DeviceModule } from './modules/device/device.module'
 import { HealthModule } from './modules/health/health.module'
 import { PostModule } from './modules/post/post.module'
+import { StoryCardModule } from './modules/story-card/story-card.module'
+import { VoiceModule } from './modules/voice/voice.module'
 
 @Module({
   imports: [
@@ -13,6 +17,7 @@ import { PostModule } from './modules/post/post.module'
       isGlobal: true,
       envFilePath: '.env'
     }),
+    ScheduleModule.forRoot(),
     LoggerModule.register({
       isGlobal: true,
       expressLogParserOptions: {
@@ -29,7 +34,10 @@ import { PostModule } from './modules/post/post.module'
     AuthModule,
     DeviceModule,
     PostModule,
-    HealthModule
+    HealthModule,
+    VoiceModule,
+    ConversationModule,
+    StoryCardModule
   ]
 })
 export class AppModule {}

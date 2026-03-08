@@ -14,9 +14,10 @@ export interface ExpressLogParserOptions {
   maxResponseBodyLength?: false | number
 }
 
-export const defaultExpressLogParserOptions: Partial<ExpressLogParserOptions> = {
-  maxResponseBodyLength: false
-}
+export const defaultExpressLogParserOptions: Partial<ExpressLogParserOptions> =
+  {
+    maxResponseBodyLength: false
+  }
 
 export interface LogData {
   req?: Request

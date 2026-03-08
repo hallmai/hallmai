@@ -12,7 +12,12 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string
 
-  @Column({ name: 'profile_image', type: 'varchar', length: 512, nullable: true })
+  @Column({
+    name: 'profile_image',
+    type: 'varchar',
+    length: 512,
+    nullable: true
+  })
   profileImage: string | null
 
   @Column({

@@ -1,7 +1,16 @@
 import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type'
 import { AuthToken } from './auth-token.entity'
+import { Conversation } from './conversation.entity'
 import { Device } from './device.entity'
 import { Post } from './post.entity'
+import { StoryCard } from './story-card.entity'
 import { User } from './user.entity'
 
-export const entities: EntityClassOrSchema[] = [User, AuthToken, Post, Device]
+export const entities: EntityClassOrSchema[] = [
+  User,
+  AuthToken,
+  Post,
+  Device,
+  Conversation,
+  StoryCard
+]

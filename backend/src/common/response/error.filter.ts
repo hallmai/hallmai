@@ -34,7 +34,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         errorCode = (code as ErrorCode) || this.mapStatusToErrorCode(status)
         extra = rest
       } else {
-        message = exResponse as string
+        message = exResponse
         errorCode = this.mapStatusToErrorCode(status)
       }
     } else if (exception instanceof Error) {

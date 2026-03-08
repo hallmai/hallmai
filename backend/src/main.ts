@@ -1,6 +1,6 @@
 import { ValidationPipe } from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
-import { NestFactory } from '@nestjs/core'
+import { NestFactory, Reflector } from '@nestjs/core'
+import { WsAdapter } from '@nestjs/platform-ws'
 import { initializeTransactionalContext } from 'typeorm-transactional'
 import { AppModule } from './app.module'
 import { LoggerService } from './common/logger/logger.service'
@@ -15,6 +15,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
   app.enableCors()
+  app.useWebSocketAdapter(new WsAdapter(app))
   app.setGlobalPrefix('api')
 
   app.useGlobalPipes(

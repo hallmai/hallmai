@@ -37,7 +37,12 @@ export class PostService {
         endedAt: MoreThanOrEqual(now)
       }
     })
-    if (!post) throw new CustomHttpException(HttpStatus.NOT_FOUND, ErrorCode.ENTITY_NOT_FOUND, '게시글을 찾을 수 없습니다')
+    if (!post)
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        ErrorCode.ENTITY_NOT_FOUND,
+        '게시글을 찾을 수 없습니다'
+      )
     return post
   }
 }

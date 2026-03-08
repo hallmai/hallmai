@@ -1,35 +1,30 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
-
-type CallState = "idle" | "listening" | "speaking" | "ending";
+import { useDevice } from "@/hooks/use-device";
+import { useVoice } from "@/hooks/use-voice";
 
 export default function CallPage() {
   const { t } = useI18n();
-  const [state, setState] = useState<CallState>("idle");
+  const { deviceUuid, loading } = useDevice();
+  const { state, start, stop } = useVoice(deviceUuid);
   const cycleRef = useRef(0);
 
-  const handleTap = useCallback(() => {
+  const handleTap = () => {
+    if (loading) return;
     if (state === "idle") {
-      setState("listening");
-      // Demo: cycle through states
-      setTimeout(() => setState("speaking"), 3000);
-      setTimeout(() => setState("listening"), 6000);
-      setTimeout(() => setState("speaking"), 9000);
-      setTimeout(() => {
-        setState("ending");
-        setTimeout(() => { cycleRef.current++; setState("idle"); }, 3000);
-      }, 12000);
+      start();
     } else if (state === "listening" || state === "speaking") {
-      setState("ending");
-      setTimeout(() => { cycleRef.current++; setState("idle"); }, 3000);
+      stop();
+      cycleRef.current++;
     }
-  }, [state]);
+  };
 
   const label = {
     idle: t.callGreeting,
+    connecting: t.callConnecting,
     listening: t.callListening,
     speaking: t.callSpeaking,
     ending: t.callEnding,
@@ -37,6 +32,7 @@ export default function CallPage() {
 
   const sublabel = {
     idle: t.callIdle,
+    connecting: "",
     listening: "",
     speaking: "",
     ending: "",
@@ -47,6 +43,13 @@ export default function CallPage() {
   return (
     <div className="flex h-dvh justify-center bg-[#f2f1ef]">
       <div className="relative flex w-full max-w-[430px] flex-col items-center justify-center h-dvh bg-[#FFF8F0]">
+        {/* Device UUID indicator */}
+        {deviceUuid && (
+          <span className="absolute top-5 left-5 text-[10px] font-mono text-stone-300">
+            {deviceUuid.substring(0, 8).toUpperCase()}
+          </span>
+        )}
+
         {/* Main Button Area */}
         <div className="relative flex items-center justify-center">
           {/* Ripple rings */}
@@ -64,8 +67,8 @@ export default function CallPage() {
             </>
           )}
 
-          {/* Idle breathing glow — layered rings */}
-          {state === "idle" && (
+          {/* Idle / Connecting breathing glow */}
+          {(state === "idle" || state === "connecting") && (
             <div key={`breathe-${cycleRef.current}`}>
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] rounded-full bg-[#E8725C]/[0.06] call-breathe" />
               <div
@@ -82,13 +85,14 @@ export default function CallPage() {
           {/* Button */}
           <button
             onClick={handleTap}
-            className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-all duration-300"
+            disabled={loading}
+            className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-all duration-300 disabled:opacity-50"
             style={{
               backgroundColor: state === "ending" ? "#34d399" : "#E8725C",
               transform: isActive ? "scale(1.08)" : "scale(1)",
             }}
           >
-            {state === "idle" && (
+            {(state === "idle" || state === "connecting") && (
               <svg className="w-14 h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z" />
               </svg>

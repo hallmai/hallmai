@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common'
 import type { Request } from 'express'
-import { defaultExpressLogParserOptions } from './logger.interface'
 import type {
   ExpressRequestLogFormat,
   ExpressResponseLogFormat,
   LogData,
   LoggerModuleOptions
 } from './logger.interface'
+import { defaultExpressLogParserOptions } from './logger.interface'
 import { MODULE_OPTIONS_TOKEN } from './logger.module-definition'
 import { WinstonLogger } from './winston-logger'
 

@@ -2,49 +2,26 @@
 
 import { useI18n } from "@/lib/i18n";
 import MobileLayout from "@/components/mobile-layout";
-import AlertBanner from "@/components/alert-banner";
-import VoiceSummary from "@/components/voice-summary";
-import StatsRow from "@/components/stats-row";
-import MoodChart from "@/components/mood-chart";
-import CallDurationChart from "@/components/call-duration-chart";
-import WeeklyInsight from "@/components/weekly-insight";
 import CareCard from "@/components/care-card";
-import type { CareCardProps } from "@/components/care-card";
 import LinkSeniorPrompt from "@/components/link-senior-prompt";
 import SeniorTabs from "@/components/senior-tabs";
-import { fetchLinkedDevices, LinkedDevice } from "@/lib/api";
+import { fetchLinkedDevices, fetchStoryCards, LinkedDevice, StoryCardData } from "@/lib/api";
 import { useEffect, useState } from "react";
 
-const careCards: Omit<CareCardProps, "isLast">[] = [
-  {
-    dateKey: "cardToday",
-    mood: "good",
-    summaryKey: "cardSummary1",
-  },
-  {
-    dateKey: "cardYesterday",
-    mood: "okay",
-    summaryKey: "cardSummary2",
-    alertKeys: ["alertLoneliness"],
-  },
-  {
-    dateKey: "cardMar3",
-    mood: "good",
-    summaryKey: "cardSummary3",
-  },
-  {
-    dateKey: "cardMar2",
-    mood: "low",
-    summaryKey: "cardSummary4",
-    alertKeys: ["alertSleepTag", "alertLowMood"],
-  },
-];
+const formatDate = (dt: string) => {
+  const d = new Date(dt);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+};
+
+const vibeToMood = (vibe: string): "good" | "okay" | "low" =>
+  ({ warm: "good", calm: "okay", quiet: "low" }[vibe] as "good" | "okay" | "low") ?? "okay";
 
 export default function DashboardPage() {
   const { t } = useI18n();
   const [devices, setDevices] = useState<LinkedDevice[] | null>(null);
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
   const [showLinkPrompt, setShowLinkPrompt] = useState(false);
+  const [cards, setCards] = useState<StoryCardData[]>([]);
 
   useEffect(() => {
     fetchLinkedDevices().then((devs) => {
@@ -53,7 +30,13 @@ export default function DashboardPage() {
         setSelectedPid(devs[0].pid);
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!selectedPid) return;
+    fetchStoryCards(selectedPid).then(setCards);
+  }, [selectedPid]);
 
   const handleLinked = () => {
     setShowLinkPrompt(false);
@@ -120,37 +103,36 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Alert — full-width band */}
-      <div className="px-5 pt-3">
-        <AlertBanner />
-      </div>
-
-      {/* Voice Summary — dark hero section */}
-      <div className="px-5 pt-4">
-        <VoiceSummary />
-      </div>
-
-      {/* Regular card sections */}
-      <div className="px-5 pt-5 pb-12 space-y-4">
-        <StatsRow />
-        <CallDurationChart />
-        <MoodChart />
-        <WeeklyInsight />
-
-        {/* Timeline Care Cards */}
+      {/* Timeline Care Cards */}
+      <div className="px-5 pt-5 pb-12">
         <section>
           <h2 className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-4">
             {t.dailyUpdates}
           </h2>
-          <div>
-            {careCards.map((card, i) => (
-              <CareCard
-                key={card.dateKey}
-                {...card}
-                isLast={i === careCards.length - 1}
-              />
-            ))}
-          </div>
+          {cards.length > 0 ? (
+            <div>
+              {cards.map((card, i) => (
+                <CareCard
+                  key={card.pid}
+                  date={formatDate(card.cardedAt)}
+                  mood={vibeToMood(card.data.vibe)}
+                  summary={card.data.topic}
+                  quote={card.data.quote}
+                  isLast={i === cards.length - 1}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+              </div>
+              <p className="text-[15px] font-semibold text-stone-500">{t.emptyCards}</p>
+              <p className="text-[13px] text-stone-400 mt-1">{t.emptyCardsDesc}</p>
+            </div>
+          )}
         </section>
       </div>
     </MobileLayout>

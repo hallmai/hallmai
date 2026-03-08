@@ -18,37 +18,38 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Good: Story = {
+export const Warm: Story = {
   args: {
-    dateKey: 'cardToday',
+    date: '3월 5일',
     mood: 'good',
-    summaryKey: 'cardSummary1',
+    summary: '어머니가 이웃 순자 아줌마와 산책을 다녀오셨어요. 따뜻한 날씨 덕분에 기분이 좋으셨대요.',
+    quote: '요즘 옆집 순자 아줌마랑 산책하는 게 제일 좋더라.',
   },
 };
 
-export const Okay: Story = {
+export const Calm: Story = {
   args: {
-    dateKey: 'cardYesterday',
+    date: '3월 4일',
     mood: 'okay',
-    summaryKey: 'cardSummary2',
-    alertKeys: ['alertLoneliness'],
+    summary: 'TV에서 옛노래가 나와서 아버지 생각이 나셨대요. 저녁엔 된장찌개를 끓여 드셨어요.',
+    quote: '그 노래 들으니까 옛날 생각이 나더라고.',
   },
 };
 
-export const Low: Story = {
+export const Quiet: Story = {
   args: {
-    dateKey: 'cardMar2',
+    date: '3월 2일',
     mood: 'low',
-    summaryKey: 'cardSummary4',
-    alertKeys: ['alertSleepTag', 'alertLowMood'],
+    summary: '어젯밤에 잠을 설쳤다고 하셨어요. 그 외엔 조용한 하루였대요.',
   },
 };
 
 export const Last: Story = {
   args: {
-    dateKey: 'cardMar3',
+    date: '3월 3일',
     mood: 'good',
-    summaryKey: 'cardSummary3',
+    summary: '손주 사진을 보내달라고 하셨어요. 매일 산책도 꾸준히 하고 계세요.',
+    quote: '손주들 사진 좀 보내줘라.',
     isLast: true,
   },
 };

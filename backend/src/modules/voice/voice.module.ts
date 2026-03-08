@@ -1,0 +1,13 @@
+import { Module } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { Device } from '../../common/entity/device.entity'
+import { ConversationModule } from '../conversation/conversation.module'
+import { VoiceGateway } from './voice.gateway'
+import { VoiceService } from './voice.service'
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Device]), ConversationModule],
+  providers: [VoiceGateway, VoiceService],
+  exports: [VoiceService]
+})
+export class VoiceModule {}

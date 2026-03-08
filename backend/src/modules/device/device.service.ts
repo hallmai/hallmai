@@ -12,8 +12,8 @@ export class DeviceService {
     private readonly deviceRepository: Repository<Device>
   ) {}
 
-  async register(deviceId: string) {
-    let device = await this.deviceRepository.findOneBy({ deviceId })
+  async register(deviceUuid: string) {
+    let device = await this.deviceRepository.findOneBy({ deviceUuid })
 
     // 이미 연결된 디바이스면 연결 정보 반환
     if (device?.linkedAt) {
@@ -25,11 +25,15 @@ export class DeviceService {
     }
 
     if (!device) {
-      device = this.deviceRepository.create({ deviceId })
+      device = this.deviceRepository.create({ deviceUuid })
     }
 
     // 유효한 코드가 이미 있으면 재사용
-    if (device.linkCode && device.linkCodeExpiresAt && device.linkCodeExpiresAt > new Date()) {
+    if (
+      device.linkCode &&
+      device.linkCodeExpiresAt &&
+      device.linkCodeExpiresAt > new Date()
+    ) {
       return {
         linked: false,
         code: device.linkCode,
@@ -52,11 +56,19 @@ export class DeviceService {
     const device = await this.deviceRepository.findOneBy({ linkCode: code })
 
     if (!device) {
-      throw new CustomHttpException(HttpStatus.NOT_FOUND, ErrorCode.ENTITY_NOT_FOUND, '유효하지 않은 연결 코드입니다')
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        ErrorCode.ENTITY_NOT_FOUND,
+        '유효하지 않은 연결 코드입니다'
+      )
     }
 
     if (device.linkCodeExpiresAt && device.linkCodeExpiresAt < new Date()) {
-      throw new CustomHttpException(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION, '만료된 연결 코드입니다')
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.VALIDATION,
+        '만료된 연결 코드입니다'
+      )
     }
 
     device.userId = userId

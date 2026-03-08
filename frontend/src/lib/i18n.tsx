@@ -87,6 +87,9 @@ const dictionaries = {
     weeklyCallDuration: "Weekly Conversation",
     weeklyCallTotal: "Total this week",
     weeklyCallUnit: "min",
+    callConnecting: "Connecting...",
+    emptyCards: "No story cards yet",
+    emptyCardsDesc: "Stories will appear here after conversations",
   },
   ko: {
     brand: "\uD560\uB9C8\uC774",
@@ -170,6 +173,9 @@ const dictionaries = {
     weeklyCallDuration: "주간 대화 시간",
     weeklyCallTotal: "이번 주 총",
     weeklyCallUnit: "분",
+    callConnecting: "연결 중...",
+    emptyCards: "아직 이야기 카드가 없어요",
+    emptyCardsDesc: "어르신과 대화가 시작되면 여기에 이야기가 쌓여요",
   },
 } satisfies Record<string, Record<string, string>>;
 

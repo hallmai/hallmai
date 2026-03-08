@@ -24,7 +24,7 @@ export async function fetchLatestPost(category: string): Promise<PostData | null
 
 export interface LinkedDevice {
   pid: string;
-  deviceId: string;
+  deviceUuid: string;
   nickname: string | null;
   linkedAt: string;
 }
@@ -36,6 +36,27 @@ export async function fetchLinkedDevices(): Promise<LinkedDevice[]> {
   if (!res.ok) return [];
   const data = await res.json();
   return data.data?.devices ?? [];
+}
+
+export interface StoryCardData {
+  pid: string;
+  type: string;
+  cardedAt: string;
+  data: {
+    topic: string;
+    quote: string;
+    vibe: "warm" | "calm" | "quiet";
+  };
+  createdAt: string;
+}
+
+export async function fetchStoryCards(devicePid: string): Promise<StoryCardData[]> {
+  const res = await fetch(`${API_URL}/api/story-cards/${devicePid}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.data?.cards ?? [];
 }
 
 export async function linkDevice(code: string, nickname?: string) {
