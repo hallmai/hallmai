@@ -1,4 +1,4 @@
-import { clearAuth, getAccessToken } from "./auth";
+import { clearAuth, getAccessToken, refreshAccessToken } from "./auth";
 import { API_URL } from "./config";
 
 function authHeaders(): HeadersInit {
@@ -11,7 +11,15 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
     ...init,
     headers: { ...authHeaders(), ...init?.headers },
   });
+
   if (res.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return fetch(`${API_URL}${path}`, {
+        ...init,
+        headers: { ...authHeaders(), ...init?.headers },
+      });
+    }
     clearAuth();
     if (typeof window !== "undefined") {
       window.location.href = "/login";
