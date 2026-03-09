@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
-import { apiGoogleLogin, clearAuth, saveAuth } from "@/lib/auth";
+import { apiGoogleLogin, clearAuth, saveAuth, subscribeAuth } from "@/lib/auth";
 import { useGoogleLogin } from "@react-oauth/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,11 +25,7 @@ function getUserSnapshot(): UserSnapshot {
   return cachedUser;
 }
 
-const subscribeUser = (cb: () => void) => {
-  const handler = (e: StorageEvent) => { if (e.key === "user") cb(); };
-  window.addEventListener("storage", handler);
-  return () => window.removeEventListener("storage", handler);
-};
+const subscribeUser = subscribeAuth;
 const getServerUser = (): UserSnapshot => null;
 
 export default function SettingsPage() {

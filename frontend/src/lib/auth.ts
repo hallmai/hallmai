@@ -44,16 +44,29 @@ export interface AuthUser {
   role: string;
 }
 
+const authListeners = new Set<() => void>();
+
+export function subscribeAuth(cb: () => void) {
+  authListeners.add(cb);
+  return () => { authListeners.delete(cb); };
+}
+
+function notifyAuth() {
+  authListeners.forEach((cb) => cb());
+}
+
 export function saveAuth(data: { accessToken: string; refreshToken: string; user: AuthUser }) {
   localStorage.setItem("accessToken", data.accessToken);
   localStorage.setItem("refreshToken", data.refreshToken);
   localStorage.setItem("user", JSON.stringify(data.user));
+  notifyAuth();
 }
 
 export function clearAuth() {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
+  notifyAuth();
 }
 
 export function getAccessToken() {

@@ -87,8 +87,6 @@ export default function StoriesPage() {
   }
 
   const selectedDevice = devices.find((d) => d.pid === selectedPid) || devices[0];
-  const seniorName = selectedDevice.nickname || t.defaultNickname;
-
   return (
     <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide pb-24">
       {/* Senior Tabs */}
@@ -101,22 +99,9 @@ export default function StoriesPage() {
         />
       )}
 
-      {/* Title */}
-      <div className="px-5 pt-2 pb-1">
-        <h1 className="text-[28px] font-black text-stone-800 tracking-tight leading-tight">
-          {seniorName}{t.storiesOf}
-        </h1>
-        <p className="text-[13px] text-stone-400 mt-0.5">
-          {t.subtitle}
-        </p>
-      </div>
-
       {/* Timeline Care Cards */}
       <div className="px-5 pt-5 pb-12">
         <section>
-          <h2 className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-4">
-            {t.dailyUpdates}
-          </h2>
           {cards.length > 0 ? (
             <div>
               {cards.map((card, i) => (

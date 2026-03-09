@@ -4,9 +4,8 @@ import { useSyncExternalStore } from "react";
 import AppShell from "@/components/app-shell";
 import FamilyTabs from "@/components/family-tabs";
 import { CallStateProvider, useCallState } from "@/contexts/call-state";
-import { isTokenValid } from "@/lib/auth";
+import { isTokenValid, subscribeAuth } from "@/lib/auth";
 
-const subscribeAuth = () => () => {};
 const getAuthSnapshot = () => isTokenValid();
 const getServerAuthSnapshot = () => false;
 
