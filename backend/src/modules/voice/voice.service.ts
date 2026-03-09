@@ -2,7 +2,7 @@ import { GoogleGenAI, Modality, Session } from '@google/genai'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type WebSocket from 'ws'
-import { AUDIO_CONFIG, SYSTEM_PROMPT } from './voice.constants'
+import { AUDIO_CONFIG, buildSystemPrompt } from './voice.constants'
 
 interface VoiceSession {
   geminiSession: Session
@@ -31,7 +31,7 @@ export class VoiceService {
       model,
       config: {
         responseModalities: [Modality.AUDIO],
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
         speechConfig: {
           languageCode: 'ko-KR'
         }
@@ -113,6 +113,12 @@ export class VoiceService {
       transcript: ''
     })
     this.send(client, 'ready', {})
+
+    // Trigger AI to greet first
+    session.sendClientContent({
+      turns: [{ role: 'user', parts: [{ text: '(대화 시작)' }] }],
+      turnComplete: true
+    })
   }
 
   sendAudio(client: WebSocket, audioBase64: string): void {

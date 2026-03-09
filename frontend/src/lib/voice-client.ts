@@ -88,7 +88,7 @@ export class VoiceClient {
       case 'ready':
         this.startRecording()
         this.player = new AudioPlayer()
-        this.setState('listening')
+        this.setState('speaking')
         break
       case 'audio':
         if (msg.data?.data) {
