@@ -1,6 +1,5 @@
 "use client";
 
-import AppShell from "@/components/app-shell";
 import { useI18n } from "@/lib/i18n";
 import { apiGoogleLogin, clearAuth, saveAuth } from "@/lib/auth";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -30,16 +29,20 @@ export default function SettingsPage() {
 
   const handleLogout = () => {
     clearAuth();
-    router.replace("/login");
+    router.replace("/call");
   };
 
   return (
-    <AppShell>
+    <>
       {/* Header */}
       <header className="flex items-center justify-between px-5 h-14 border-b border-stone-200/40">
-        <Link href={user ? "/dashboard" : "/call"} className="text-[14px] text-[#E8725C] font-medium">
-          &larr; {t.settingsBack}
-        </Link>
+        {user ? (
+          <div className="w-14" />
+        ) : (
+          <Link href="/call" className="text-[14px] text-[#E8725C] font-medium">
+            &larr; {t.settingsBack}
+          </Link>
+        )}
         <span className="text-[16px] font-bold text-stone-800">{t.settingsTitle}</span>
         <button
           onClick={toggleLocale}
@@ -49,7 +52,7 @@ export default function SettingsPage() {
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-12">
+      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-24">
         <div className="space-y-4">
           {user ? (
             <LoggedInSettings user={user} t={t} onLogout={handleLogout} />
@@ -58,7 +61,7 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }
 
@@ -130,7 +133,7 @@ function GuestSettings({
         }
 
         saveAuth(result);
-        router.push("/dashboard");
+        router.push("/stories");
       } catch {
         setError(t.linkFailed);
       } finally {

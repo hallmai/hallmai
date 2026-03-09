@@ -9,7 +9,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isTokenValid()) {
-      router.push("/dashboard");
+      router.push("/stories");
     } else {
       clearAuth();
       router.push("/call");

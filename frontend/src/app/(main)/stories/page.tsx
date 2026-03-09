@@ -1,12 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
-import MobileLayout from "@/components/mobile-layout";
 import CareCard from "@/components/care-card";
 import LinkSeniorPrompt from "@/components/link-senior-prompt";
 import SeniorTabs from "@/components/senior-tabs";
 import { fetchLinkedDevices, fetchStoryCards, LinkedDevice, StoryCardData } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { isTokenValid } from "@/lib/auth";
 
 const formatDate = (dt: string) => {
   const d = new Date(dt);
@@ -16,14 +17,23 @@ const formatDate = (dt: string) => {
 const vibeToMood = (vibe: string): "good" | "okay" | "low" =>
   ({ warm: "good", calm: "okay", quiet: "low" }[vibe] as "good" | "okay" | "low") ?? "okay";
 
-export default function DashboardPage() {
+export default function StoriesPage() {
   const { t } = useI18n();
+  const router = useRouter();
   const [devices, setDevices] = useState<LinkedDevice[] | null>(null);
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
   const [showLinkPrompt, setShowLinkPrompt] = useState(false);
   const [cards, setCards] = useState<StoryCardData[]>([]);
 
+  // Auth guard
   useEffect(() => {
+    if (!isTokenValid()) {
+      router.replace("/call");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (!isTokenValid()) return;
     fetchLinkedDevices().then((devs) => {
       setDevices(devs);
       if (devs.length > 0 && !selectedPid) {
@@ -48,21 +58,19 @@ export default function DashboardPage() {
     });
   };
 
-  // 로딩 중
+  // Loading
   if (devices === null) {
     return (
-      <MobileLayout>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="size-6 animate-spin rounded-full border-2 border-[#E8725C] border-t-transparent" />
-        </div>
-      </MobileLayout>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="size-6 animate-spin rounded-full border-2 border-[#E8725C] border-t-transparent" />
+      </div>
     );
   }
 
-  // 연결된 시니어 없음 or 추가 연결 모드
+  // No linked seniors or adding mode
   if (devices.length === 0 || showLinkPrompt) {
     return (
-      <MobileLayout>
+      <div className="flex-1 flex flex-col pb-24">
         {showLinkPrompt && devices.length > 0 && (
           <div className="px-5 pt-3">
             <button
@@ -74,7 +82,7 @@ export default function DashboardPage() {
           </div>
         )}
         <LinkSeniorPrompt onLinked={handleLinked} />
-      </MobileLayout>
+      </div>
     );
   }
 
@@ -82,7 +90,7 @@ export default function DashboardPage() {
   const seniorName = selectedDevice.nickname || "어르신";
 
   return (
-    <MobileLayout>
+    <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide pb-24">
       {/* Senior Tabs */}
       {devices.length > 0 && (
         <SeniorTabs
@@ -135,6 +143,6 @@ export default function DashboardPage() {
           )}
         </section>
       </div>
-    </MobileLayout>
+    </div>
   );
 }

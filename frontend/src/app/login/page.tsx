@@ -30,7 +30,7 @@ export default function LoginPage() {
         }
 
         saveAuth(result);
-        router.push("/dashboard");
+        router.push("/stories");
       } catch {
         setError(t.loginError);
       } finally {

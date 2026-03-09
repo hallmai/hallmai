@@ -59,7 +59,7 @@ export default function RegisterPage() {
       const result = await apiGoogleRegister(pendingToken, !!checked["marketing"]);
       saveAuth(result);
       sessionStorage.removeItem("pendingGoogleIdToken");
-      router.replace("/dashboard");
+      router.replace("/stories");
     } catch {
       setIsSubmitting(false);
     }
