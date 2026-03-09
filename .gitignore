@@ -13,4 +13,9 @@ package-lock.json
 logs/
 .claude/
 .bkit/
+docs/01-plan/
+docs/02-design/
+docs/03-analysis/
+docs/04-report/
+docs/plans/
 .worktrees/
