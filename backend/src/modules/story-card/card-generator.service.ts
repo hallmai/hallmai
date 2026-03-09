@@ -15,7 +15,7 @@ import { StoryCardService } from './story-card.service'
 
 const CARD_PROMPT = `대화 기록을 바탕으로 가족에게 보여줄 카드를 만들어주세요.
 - topic: 대화 주제 한 문장 요약
-- quote: 어르신 실제 발화 인용
+- quote: 상대방 실제 발화 인용
 - vibe: warm / calm / quiet 중 하나
 
 포함 금지: 건강 세부(증상, 약 이름), 가족 갈등, 금전 관련

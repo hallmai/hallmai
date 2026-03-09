@@ -26,7 +26,7 @@ export default function SeniorTabs({ devices, selected, onSelect, onAdd }: Senio
                 : "bg-white border border-stone-200 text-stone-500"
             }`}
           >
-            {d.nickname || "어르신"}
+            {d.nickname || "부모님"}
           </button>
         );
       })}

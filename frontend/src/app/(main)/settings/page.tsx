@@ -3,24 +3,34 @@
 import { useI18n } from "@/lib/i18n";
 import { apiGoogleLogin, clearAuth, saveAuth } from "@/lib/auth";
 import { useGoogleLogin } from "@react-oauth/google";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 
-function getUserSnapshot(): { name: string; email: string; profileImage?: string } | null {
+type UserSnapshot = { name: string; email: string; profileImage?: string } | null;
+let cachedRaw: string | null = null;
+let cachedUser: UserSnapshot = null;
+
+function getUserSnapshot(): UserSnapshot {
   const raw = localStorage.getItem("user");
-  if (!raw) return null;
+  if (raw === cachedRaw) return cachedUser;
+  cachedRaw = raw;
+  if (!raw) { cachedUser = null; return null; }
   try {
-    return JSON.parse(raw);
+    cachedUser = JSON.parse(raw);
   } catch {
     localStorage.removeItem("user");
-    return null;
+    cachedUser = null;
   }
+  return cachedUser;
 }
 
-const subscribeUser = () => () => {};
-const getServerUser = () => null;
+const subscribeUser = (cb: () => void) => {
+  const handler = (e: StorageEvent) => { if (e.key === "user") cb(); };
+  window.addEventListener("storage", handler);
+  return () => window.removeEventListener("storage", handler);
+};
+const getServerUser = (): UserSnapshot => null;
 
 export default function SettingsPage() {
   const { t, locale, toggleLocale } = useI18n();
@@ -79,7 +89,7 @@ function LoggedInSettings({
       {/* Profile */}
       <div className="card p-4 flex items-center gap-3">
         {user.profileImage ? (
-          <Image src={user.profileImage} alt="" width={40} height={40} className="rounded-full" />
+          <img src={user.profileImage} alt="" width={40} height={40} className="rounded-full" />
         ) : (
           <div className="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center">
             <svg className="w-5 h-5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
