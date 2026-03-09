@@ -5,6 +5,11 @@
 
 set -euo pipefail
 
+# Prepare log directory and clear previous logs
+mkdir -p logs
+> logs/backend.log
+> logs/frontend.log
+
 # Kill existing dev servers
 echo "Killing existing servers..."
 lsof -ti :3000 -sTCP:LISTEN | xargs kill -9 2>/dev/null || true
@@ -35,7 +40,7 @@ echo "MySQL is ready."
 
 # 2. Start backend (background)
 echo "Starting backend..."
-(cd backend && yarn start:dev) &
+(cd backend && yarn start:dev 2>&1 | tee ../logs/backend.log) &
 BACKEND_PID=$!
 sleep 2
 if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
@@ -46,4 +51,4 @@ fi
 # 3. Start frontend (foreground)
 echo "Starting frontend..."
 cd frontend
-exec yarn dev
+exec yarn dev 2>&1 | tee ../logs/frontend.log

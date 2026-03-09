@@ -11,6 +11,8 @@
 ## 개발 환경
 
 - 패키지 매니저: yarn
+- 로컬 전체 실행: `./start-local.sh`
+- 로그 확인: `logs/backend.log`, `logs/frontend.log`
 - 프론트엔드 실행: `cd frontend && yarn dev`
 - 프론트엔드 린트: `cd frontend && yarn lint`
 - 백엔드 실행: `cd backend && yarn start:dev`
@@ -46,18 +48,17 @@
 
 ## 주요 경로 (프론트엔드)
 
-### 시니어 플로우
-- `/senior` — 시니어 통화 화면
-- `/call` — 음성 대화
-
-### 가족 플로우
-- `/login` — 로그인
-- `/auth/register` — 회원가입
-- `/dashboard` — 가족 홈 (이야기 카드)
+### (main) Route Group (공유 레이아웃)
+- `/call` — 통화 (시니어/가족 공용)
+- `/stories` — 이야기 피드 (가족 전용)
 - `/settings` — 설정
 
+### 인증
+- `/login` — 로그인
+- `/auth/register` — 회원가입
+
 ### 공통
-- `/` — 랜딩
+- `/` — 진입점 (토큰 유무로 리다이렉트)
 - `/terms` — 이용약관
 - `/privacy` — 개인정보처리방침
 - `/marketing-terms` — 마케팅 약관

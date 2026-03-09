@@ -1,6 +1,7 @@
 node_modules/
 .DS_Store
-.env*
+.env.local
+.env*.local
 *.pem
 .next/
 out/
@@ -9,5 +10,6 @@ dist/
 package-lock.json
 .vercel
 *.tsbuildinfo
+logs/
 .bkit/
 .worktrees/

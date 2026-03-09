@@ -15,7 +15,7 @@ import { VoiceModule } from './modules/voice/voice.module'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env'
+      envFilePath: ['.env.local', '.env']
     }),
     ScheduleModule.forRoot(),
     LoggerModule.register({
