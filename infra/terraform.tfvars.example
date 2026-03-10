@@ -1,6 +1,7 @@
 # Copy to terraform.tfvars and fill in values
 # cp terraform.tfvars.example terraform.tfvars
 
-project_id = "your-gcp-project-id"
-region     = "asia-northeast3"
-db_tier    = "db-f1-micro"
+project_id  = "your-gcp-project-id"
+region      = "asia-northeast3"
+db_tier     = "db-f1-micro"
+cors_origin = "https://your-domain.vercel.app"

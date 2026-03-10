@@ -20,3 +20,9 @@ variable "backend_image" {
   type        = string
   default     = ""
 }
+
+variable "cors_origin" {
+  description = "Allowed CORS origins (comma-separated)"
+  type        = string
+  default     = "http://localhost:3000"
+}

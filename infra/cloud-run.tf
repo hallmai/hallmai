@@ -38,6 +38,11 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name  = "CORS_ORIGIN"
+        value = var.cors_origin
+      }
+
+      env {
         name  = "DB_HOST"
         value = google_sql_database_instance.main.private_ip_address
       }
@@ -48,12 +53,12 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
-        name  = "DB_NAME"
+        name  = "DB_DATABASE"
         value = google_sql_database.hallmai.name
       }
 
       env {
-        name  = "DB_USER"
+        name  = "DB_USERNAME"
         value = google_sql_user.app.name
       }
 
