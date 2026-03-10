@@ -23,9 +23,9 @@ export class StoryCard extends BaseEntity {
   @Column({ type: 'varchar', length: 30, default: 'daily_story' })
   type: string
 
-  @Column({ name: 'carded_at', type: 'datetime' })
+  @Column({ name: 'carded_at', type: 'timestamptz' })
   cardedAt: Date
 
-  @Column({ type: 'json' })
+  @Column({ type: 'jsonb' })
   data: DailyStoryData
 }

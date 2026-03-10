@@ -12,15 +12,15 @@ export class Conversation extends BaseEntity {
   @JoinColumn({ name: 'device_id' })
   device: Device
 
-  @Column({ name: 'started_at', type: 'datetime' })
+  @Column({ name: 'started_at', type: 'timestamptz' })
   startedAt: Date
 
-  @Column({ name: 'ended_at', type: 'datetime', nullable: true })
+  @Column({ name: 'ended_at', type: 'timestamptz', nullable: true })
   endedAt: Date | null
 
   @Column({ name: 'duration_seconds', type: 'int', nullable: true })
   durationSeconds: number | null
 
-  @Column({ type: 'longtext', nullable: true })
+  @Column({ type: 'text', nullable: true })
   transcript: string | null
 }

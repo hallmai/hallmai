@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # hallmai 로컬 개발 서버 원클릭 시작 스크립트
-# MySQL(Docker) + Backend(NestJS) + Frontend(Next.js)
+# PostgreSQL(Docker) + Backend(NestJS) + Frontend(Next.js)
 
 set -euo pipefail
 
@@ -33,10 +33,10 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-# 1. Start MySQL (wait for healthcheck)
-echo "Starting MySQL..."
+# 1. Start PostgreSQL (wait for healthcheck)
+echo "Starting PostgreSQL..."
 docker compose up -d --wait
-echo "MySQL is ready."
+echo "PostgreSQL is ready."
 
 # 2. Start backend (background)
 echo "Starting backend..."

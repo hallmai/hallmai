@@ -1,6 +1,6 @@
 {
   "name": "hallmai-backend",
-  "version": "0.0.1",
+  "version": "0.1.4",
   "description": "",
   "author": "",
   "private": true,
@@ -35,7 +35,7 @@
     "date-fns": "^4.1.0",
     "google-auth-library": "^10.6.1",
     "logform": "^2.7.0",
-    "mysql2": "^3.19.0",
+    "pg": "^8.16.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",

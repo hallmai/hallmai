@@ -20,13 +20,9 @@ export class User extends BaseEntity {
   })
   profileImage: string | null
 
-  @Column({
-    type: 'enum',
-    enum: ['senior', 'child'],
-    default: 'child'
-  })
+  @Column({ type: 'varchar', length: 20, default: 'child' })
   role: 'senior' | 'child'
 
-  @Column({ name: 'marketing_agreed_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'marketing_agreed_at', type: 'timestamptz', nullable: true })
   marketingAgreedAt: Date | null
 }

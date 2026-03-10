@@ -16,15 +16,15 @@ export class Post extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   title: string
 
-  @Column({ type: 'longtext' })
+  @Column({ type: 'text' })
   content: string
 
   @Column({ type: 'int', default: 0 })
   sort: number
 
-  @Column({ name: 'started_at', type: 'datetime' })
+  @Column({ name: 'started_at', type: 'timestamptz' })
   startedAt: Date
 
-  @Column({ name: 'ended_at', type: 'datetime' })
+  @Column({ name: 'ended_at', type: 'timestamptz' })
   endedAt: Date
 }

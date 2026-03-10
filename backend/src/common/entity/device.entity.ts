@@ -14,7 +14,7 @@ export class Device extends BaseEntity {
   @Column({ name: 'link_code', type: 'varchar', length: 6, nullable: true })
   linkCode: string | null
 
-  @Column({ name: 'link_code_expires_at', type: 'datetime', nullable: true })
+  @Column({ name: 'link_code_expires_at', type: 'timestamptz', nullable: true })
   linkCodeExpiresAt: Date | null
 
   @Column({ name: 'user_id', type: 'int', nullable: true })
@@ -24,6 +24,6 @@ export class Device extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User | null
 
-  @Column({ name: 'linked_at', type: 'datetime', nullable: true })
+  @Column({ name: 'linked_at', type: 'timestamptz', nullable: true })
   linkedAt: Date | null
 }

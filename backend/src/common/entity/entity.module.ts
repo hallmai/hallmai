@@ -11,20 +11,14 @@ import { entities } from './entity.providers'
   imports: [
     TypeOrmModule.forRootAsync({
       useFactory: (config: ConfigService, loggerService: LoggerService) => ({
-        type: 'mysql' as const,
+        type: 'postgres' as const,
         host: config.get<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT', 3306),
+        port: config.get<number>('DB_PORT', 5432),
         username: config.get<string>('DB_USERNAME'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_DATABASE'),
         synchronize: config.get<string>('NODE_ENV') === 'development',
-        timezone: '+09:00',
-        dateStrings: ['DATE'],
         entities,
-        legacySpatialSupport: false,
-        extra: {
-          enableKeepAlive: true
-        },
         logger: new TypeormLogger(loggerService)
       }),
       async dataSourceFactory(option) {

@@ -1,7 +1,9 @@
 import {
   Column,
+  CreateDateColumn,
   DeleteDateColumn,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
   BaseEntity as _BaseEntity
 } from 'typeorm'
 import { uuidv7 } from 'uuidv7'
@@ -13,20 +15,12 @@ export class BaseEntity extends _BaseEntity {
   @Column({ type: 'varchar', length: 36, unique: true })
   pid: string = uuidv7()
 
-  @Column({
-    name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP'
-  })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date
 
-  @Column({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
-  })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date
 
-  @DeleteDateColumn({ name: 'deleted_at' })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date | null
 }

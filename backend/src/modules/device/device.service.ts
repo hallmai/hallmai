@@ -53,10 +53,7 @@ export class DeviceService {
     try {
       await this.deviceRepository.save(device)
     } catch (error) {
-      if (
-        (error as { code?: string }).code === 'ER_DUP_ENTRY' &&
-        retryCount < 3
-      ) {
+      if ((error as { code?: string }).code === '23505' && retryCount < 3) {
         return this.register(deviceUuid, retryCount + 1)
       }
       throw error

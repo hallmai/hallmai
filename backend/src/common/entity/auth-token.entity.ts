@@ -18,19 +18,19 @@ export class AuthToken extends BaseEntity {
   @Column({ name: 'provider_user_id', type: 'varchar', length: 255 })
   providerUserId: string
 
-  @Column({ name: 'provider_data_json', type: 'json' })
+  @Column({ name: 'provider_data_json', type: 'jsonb' })
   providerDataJson: Record<string, unknown>
 
   @Column({ name: 'refresh_token', type: 'varchar', length: 255, unique: true })
   refreshToken: string
 
-  @Column({ name: 'expired_at', type: 'datetime', nullable: true })
+  @Column({ name: 'expired_at', type: 'timestamptz', nullable: true })
   expiredAt: Date | null
 
   @Column({
     name: 'last_activated_at',
-    type: 'datetime',
-    default: () => 'NOW()'
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP'
   })
   lastActivatedAt: Date
 }
