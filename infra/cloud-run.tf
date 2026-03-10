@@ -6,9 +6,10 @@ resource "google_artifact_registry_repository" "docker" {
 }
 
 resource "google_cloud_run_v2_service" "backend" {
-  name     = "hallmai-backend"
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  name                = "hallmai-backend"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_ALL"
+  deletion_protection = false
 
   template {
     service_account = google_service_account.cloud_run.email

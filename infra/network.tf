@@ -29,8 +29,10 @@ resource "google_service_networking_connection" "private_vpc" {
 
 # VPC Access Connector for Cloud Run → Cloud SQL
 resource "google_vpc_access_connector" "connector" {
-  name          = "hallmai-connector"
-  region        = var.region
-  ip_cidr_range = "10.8.0.0/28"
-  network       = google_compute_network.vpc.name
+  name           = "hallmai-connector"
+  region         = var.region
+  ip_cidr_range  = "10.8.0.0/28"
+  network        = google_compute_network.vpc.name
+  min_throughput = 200
+  max_throughput = 300
 }

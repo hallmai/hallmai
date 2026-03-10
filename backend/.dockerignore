@@ -9,5 +9,3 @@ coverage
 .eslintrc*
 eslint.config*
 .prettierrc*
-tsconfig*.json
-nest-cli.json
