@@ -19,3 +19,10 @@ docs/03-analysis/
 docs/04-report/
 docs/plans/
 .worktrees/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfvars
+infra/.terraform.lock.hcl
