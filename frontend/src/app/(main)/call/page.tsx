@@ -15,7 +15,7 @@ const getServerAuthSnapshot = () => false;
 export default function CallPage() {
   const { t } = useI18n();
   const { deviceUuid, linkCode, linked, loading } = useDevice();
-  const { state, start, stop } = useVoice(deviceUuid);
+  const { state, error, silenceWarning, start, stop } = useVoice(deviceUuid);
   const { setCallActive } = useCallState();
   const [cycle, setCycle] = useState(0);
   const isLoggedIn = useSyncExternalStore(subscribeAuth, getAuthSnapshot, getServerAuthSnapshot);
@@ -34,26 +34,40 @@ export default function CallPage() {
     }
   };
 
-  const label = {
-    idle: t.callGreeting,
-    connecting: t.callConnecting,
-    listening: t.callListening,
-    speaking: t.callSpeaking,
-    ending: t.callEnding,
-  }[state];
+  const isError = !!(error && state === "idle");
 
-  const sublabel = {
-    idle: t.callIdle,
-    connecting: "",
-    listening: "",
-    speaking: "",
-    ending: "",
-  }[state];
+  const label = isError
+    ? t.callError
+    : silenceWarning
+      ? t.callSilenceWarning
+      : {
+          idle: t.callGreeting,
+          connecting: t.callConnecting,
+          listening: t.callListening,
+          speaking: t.callSpeaking,
+          ending: t.callEnding,
+        }[state];
+
+  const sublabel = isError
+    ? t.callErrorRetry
+    : {
+        idle: t.callIdle,
+        connecting: "",
+        listening: "",
+        speaking: "",
+        ending: "",
+      }[state];
 
   const isActive = state === "listening" || state === "speaking";
   const isIdle = state === "idle";
   const showLinkCode = !isLoggedIn && linkCode && !linked;
-  const showSettingsButton = !isLoggedIn && isIdle;
+  const showSettingsButton = !isLoggedIn && isIdle && !isError;
+
+  const buttonColor = isError
+    ? "#ef4444"
+    : state === "ending"
+      ? "#34d399"
+      : "#E8725C";
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center">
@@ -82,7 +96,7 @@ export default function CallPage() {
         )}
 
         {/* Idle / Connecting breathing glow */}
-        {(state === "idle" || state === "connecting") && (
+        {(state === "idle" || state === "connecting") && !isError && (
           <div key={`breathe-${cycle}`}>
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] rounded-full bg-[#E8725C]/[0.06] call-breathe" />
             <div
@@ -102,11 +116,17 @@ export default function CallPage() {
           disabled={loading}
           className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-all duration-300 disabled:opacity-50"
           style={{
-            backgroundColor: state === "ending" ? "#34d399" : "#E8725C",
+            backgroundColor: buttonColor,
             transform: isActive ? "scale(1.08)" : "scale(1)",
           }}
         >
-          {(state === "idle" || state === "connecting") && (
+          {isError && (
+            <svg className="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+
+          {!isError && (state === "idle" || state === "connecting") && (
             <svg className="w-14 h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z" />
             </svg>
@@ -153,7 +173,7 @@ export default function CallPage() {
         <p
           className="text-[32px] font-bold italic tracking-tight leading-tight"
           style={{
-            color: state === "ending" ? "#34d399" : "#44403c",
+            color: isError ? "#ef4444" : state === "ending" ? "#34d399" : "#44403c",
           }}
         >
           &ldquo; {label} &rdquo;

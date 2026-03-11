@@ -13,6 +13,7 @@ interface WsMessage {
 export type VoiceEventHandler = {
   onStateChange: (state: VoiceState) => void
   onError: (message: string) => void
+  onSilenceWarning?: () => void
 }
 
 export class VoiceClient {
@@ -108,6 +109,9 @@ export class VoiceClient {
       case 'ended':
         this.cleanup()
         this.setState('idle')
+        break
+      case 'silence_warning':
+        this.handler.onSilenceWarning?.()
         break
       case 'error':
         this.handler.onError((msg.data?.message as string) || 'Unknown error')

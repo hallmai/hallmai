@@ -59,6 +59,9 @@ const dictionaries = {
     loginLoading: "Signing in...",
     loginError: "Login failed. Please try again.",
     loginGoogleError: "Google sign-in failed.",
+    callError: "Couldn't connect",
+    callErrorRetry: "Touch to try again",
+    callSilenceWarning: "Are you still there?",
   },
   ko: {
     brand: "\uD560\uB9C8\uC774",
@@ -114,6 +117,9 @@ const dictionaries = {
     loginLoading: "\uB85C\uADF8\uC778 \uC911...",
     loginError: "\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.",
     loginGoogleError: "Google \uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+    callError: "\uC5F0\uACB0\uC774 \uC548 \uB410\uC5B4\uC694",
+    callErrorRetry: "\uB2E4\uC2DC \uD130\uCE58\uD574 \uC8FC\uC138\uC694",
+    callSilenceWarning: "\uAC70\uAE30 \uACC4\uC138\uC694?",
   },
 } satisfies Record<string, Record<string, string>>;
 
