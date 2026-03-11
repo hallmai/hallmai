@@ -61,8 +61,11 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(client: WebSocket): Promise<void> {
     this.logger.debug('Client disconnected')
-    await this.endConversation(client)
-    this.voiceService.endSession(client)
+    try {
+      await this.endConversation(client)
+    } finally {
+      this.voiceService.endSession(client)
+    }
   }
 
   private async handleMessage(
