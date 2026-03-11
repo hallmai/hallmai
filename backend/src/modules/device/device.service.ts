@@ -14,25 +14,22 @@ export class DeviceService {
   ) {}
 
   async register(
-    deviceUuid: string,
-    retryCount = 0
+    deviceUuid: string
   ): Promise<
     | { linked: true; nickname: string | null; linkedAt: Date }
     | { linked: false; code: string; expiresAt: Date }
   > {
-    let device = await this.deviceRepository.findOneBy({ deviceUuid })
+    // Upsert: insert if not exists, do nothing on conflict
+    await this.deviceRepository.upsert({ deviceUuid }, ['deviceUuid'])
+    const device = await this.deviceRepository.findOneByOrFail({ deviceUuid })
 
     // 이미 연결된 디바이스면 연결 정보 반환
-    if (device?.linkedAt) {
+    if (device.linkedAt) {
       return {
         linked: true,
         nickname: device.nickname,
         linkedAt: device.linkedAt
       }
-    }
-
-    if (!device) {
-      device = this.deviceRepository.create({ deviceUuid })
     }
 
     // 유효한 코드가 이미 있으면 재사용
@@ -50,14 +47,7 @@ export class DeviceService {
 
     device.linkCode = await this.generateUniqueCode()
     device.linkCodeExpiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30분
-    try {
-      await this.deviceRepository.save(device)
-    } catch (error) {
-      if ((error as { code?: string }).code === '23505' && retryCount < 3) {
-        return this.register(deviceUuid, retryCount + 1)
-      }
-      throw error
-    }
+    await this.deviceRepository.save(device)
 
     return {
       linked: false,
