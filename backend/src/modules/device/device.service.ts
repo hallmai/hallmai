@@ -116,9 +116,9 @@ export class DeviceService {
 
   private async generateUniqueCode(): Promise<string> {
     const maxAttempts = 5
-    let length = 4
+    const maxLength = 6 // link_code varchar(6)
 
-    for (;;) {
+    for (let length = 4; length <= maxLength; length++) {
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const code = this.generateCode(length)
         const existing = await this.deviceRepository.findOneBy({
@@ -132,9 +132,8 @@ export class DeviceService {
           return code
         }
       }
-      // All attempts at this length collided — expand
-      length++
     }
+    throw new Error('Failed to generate unique link code')
   }
 
   private generateCode(length: number): string {

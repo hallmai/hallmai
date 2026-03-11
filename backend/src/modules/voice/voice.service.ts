@@ -18,6 +18,7 @@ interface VoiceSession {
   currentThinking: string
   silenceWarningTimer: ReturnType<typeof setTimeout> | null
   silenceTimer: ReturnType<typeof setTimeout> | null
+  silenceGraceTimer: ReturnType<typeof setTimeout> | null
   onSilenceTimeout: (() => void) | null
 }
 
@@ -151,6 +152,7 @@ export class VoiceService {
                 voiceSession.lastSpeaker = null
               }
               this.send(client, 'turn_complete', {})
+              this.resetSilenceTimer(client)
             }
           }
         },
@@ -179,6 +181,7 @@ export class VoiceService {
       currentThinking: '',
       silenceWarningTimer: null,
       silenceTimer: null,
+      silenceGraceTimer: null,
       onSilenceTimeout: null
     })
     this.send(client, 'ready', {})
@@ -254,16 +257,12 @@ export class VoiceService {
         ],
         turnComplete: true
       })
-      // Wait for AI to finish speaking, then trigger timeout callback
-      const checkComplete = () => {
-        // Give AI time to respond and speak, then end
-        setTimeout(() => {
-          if (session.onSilenceTimeout) {
-            session.onSilenceTimeout()
-          }
-        }, 8000)
-      }
-      checkComplete()
+      // Give AI time to respond and speak, then end
+      session.silenceGraceTimer = setTimeout(() => {
+        if (session.onSilenceTimeout) {
+          session.onSilenceTimeout()
+        }
+      }, 8000)
     }, SILENCE_TIMEOUT_MS)
   }
 
@@ -275,6 +274,10 @@ export class VoiceService {
     if (session.silenceTimer) {
       clearTimeout(session.silenceTimer)
       session.silenceTimer = null
+    }
+    if (session.silenceGraceTimer) {
+      clearTimeout(session.silenceGraceTimer)
+      session.silenceGraceTimer = null
     }
   }
 

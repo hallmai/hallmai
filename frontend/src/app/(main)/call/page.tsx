@@ -38,7 +38,7 @@ export default function CallPage() {
 
   const label = isError
     ? t.callError
-    : silenceWarning
+    : silenceWarning && state === "listening"
       ? t.callSilenceWarning
       : {
           idle: t.callGreeting,
