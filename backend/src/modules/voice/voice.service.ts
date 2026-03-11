@@ -8,6 +8,7 @@ interface VoiceSession {
   geminiSession: Session
   deviceUuid: string
   transcript: string
+  thinking: string
 }
 
 @Injectable()
@@ -31,6 +32,8 @@ export class VoiceService {
       model,
       config: {
         responseModalities: [Modality.AUDIO],
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
         systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
         speechConfig: {
           languageCode: 'ko-KR'
@@ -43,18 +46,6 @@ export class VoiceService {
         onmessage: (msg) => {
           if (client.readyState !== 1) return
 
-          // Audio response
-          if (msg.data) {
-            const parts = Array.isArray(msg.data)
-              ? (msg.data as Array<{ inlineData?: { data: string } }>)
-              : [msg.data as { inlineData?: { data: string } }]
-            for (const part of parts) {
-              if (part.inlineData?.data) {
-                this.send(client, 'audio', { data: part.inlineData.data })
-              }
-            }
-          }
-
           // Server content with model turn
           if (msg.serverContent) {
             const sc = msg.serverContent as Record<string, unknown>
@@ -62,6 +53,28 @@ export class VoiceService {
             // Interrupted
             if (sc.interrupted) {
               this.send(client, 'interrupted', {})
+            }
+
+            // Input transcription (user speech → text)
+            const inputTranscription = sc.inputTranscription as
+              | { text?: string }
+              | undefined
+            if (inputTranscription?.text) {
+              const voiceSession = this.sessions.get(client)
+              if (voiceSession) {
+                voiceSession.transcript += `User: ${inputTranscription.text}\n`
+              }
+            }
+
+            // Output transcription (AI speech → text)
+            const outputTranscription = sc.outputTranscription as
+              | { text?: string }
+              | undefined
+            if (outputTranscription?.text) {
+              const voiceSession = this.sessions.get(client)
+              if (voiceSession) {
+                voiceSession.transcript += `AI: ${outputTranscription.text}\n`
+              }
             }
 
             // Audio parts in model turn
@@ -74,11 +87,11 @@ export class VoiceService {
                   const inlineData = part.inlineData as { data: string }
                   this.send(client, 'audio', { data: inlineData.data })
                 }
-                // Collect text transcript from AI
+                // Collect AI thinking/reasoning text
                 if (part.text && typeof part.text === 'string') {
                   const voiceSession = this.sessions.get(client)
                   if (voiceSession) {
-                    voiceSession.transcript += `AI: ${part.text}\n`
+                    voiceSession.thinking += `${part.text}\n`
                   }
                 }
               }
@@ -110,7 +123,8 @@ export class VoiceService {
     this.sessions.set(client, {
       geminiSession: session,
       deviceUuid,
-      transcript: ''
+      transcript: '',
+      thinking: ''
     })
     this.send(client, 'ready', {})
 
@@ -135,11 +149,11 @@ export class VoiceService {
 
   endSession(
     client: WebSocket
-  ): { deviceUuid: string; transcript: string } | null {
+  ): { deviceUuid: string; transcript: string; thinking: string } | null {
     const session = this.sessions.get(client)
     if (!session) return null
 
-    const { deviceUuid, transcript } = session
+    const { deviceUuid, transcript, thinking } = session
 
     try {
       session.geminiSession.close()
@@ -150,18 +164,11 @@ export class VoiceService {
     this.sessions.delete(client)
     this.send(client, 'ended', {})
 
-    return { deviceUuid, transcript }
+    return { deviceUuid, transcript, thinking }
   }
 
   getSession(client: WebSocket): VoiceSession | undefined {
     return this.sessions.get(client)
-  }
-
-  appendUserTranscript(client: WebSocket, text: string): void {
-    const session = this.sessions.get(client)
-    if (session && text) {
-      session.transcript += `User: ${text}\n`
-    }
   }
 
   private send(

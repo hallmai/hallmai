@@ -23,4 +23,7 @@ export class Conversation extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   transcript: string | null
+
+  @Column({ type: 'text', nullable: true })
+  thinking: string | null
 }

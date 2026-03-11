@@ -132,8 +132,9 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const session = this.voiceService.getSession(client)
     const transcript = session?.transcript || null
+    const thinking = session?.thinking || null
 
-    await this.conversationService.end(conversationId, transcript)
+    await this.conversationService.end(conversationId, transcript, thinking)
     this.clientConversations.delete(client)
   }
 
