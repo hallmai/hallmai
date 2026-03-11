@@ -2,6 +2,12 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm'
 import { BaseEntity } from './base.entity'
 import { Device } from './device.entity'
 
+export interface TranscriptEntry {
+  role: 'user' | 'ai'
+  text: string
+  thinking?: string
+}
+
 @Entity('conversations')
 export class Conversation extends BaseEntity {
   @Index()
@@ -21,9 +27,6 @@ export class Conversation extends BaseEntity {
   @Column({ name: 'duration_seconds', type: 'int', nullable: true })
   durationSeconds: number | null
 
-  @Column({ type: 'text', nullable: true })
-  transcript: string | null
-
-  @Column({ type: 'text', nullable: true })
-  thinking: string | null
+  @Column({ type: 'jsonb', nullable: true })
+  transcript: TranscriptEntry[] | null
 }

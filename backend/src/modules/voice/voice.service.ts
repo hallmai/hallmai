@@ -2,13 +2,15 @@ import { GoogleGenAI, Modality, Session } from '@google/genai'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type WebSocket from 'ws'
+import type { TranscriptEntry } from '../../common/entity/conversation.entity'
 import { AUDIO_CONFIG, buildSystemPrompt } from './voice.constants'
 
 interface VoiceSession {
   geminiSession: Session
   deviceUuid: string
-  transcript: string
-  thinking: string
+  transcript: TranscriptEntry[]
+  lastSpeaker: 'user' | 'ai' | null
+  currentThinking: string
 }
 
 @Injectable()
@@ -62,7 +64,20 @@ export class VoiceService {
             if (inputTranscription?.text) {
               const voiceSession = this.sessions.get(client)
               if (voiceSession) {
-                voiceSession.transcript += `User: ${inputTranscription.text}\n`
+                if (
+                  voiceSession.lastSpeaker === 'user' &&
+                  voiceSession.transcript.length > 0
+                ) {
+                  const last =
+                    voiceSession.transcript[voiceSession.transcript.length - 1]
+                  last.text += inputTranscription.text
+                } else {
+                  voiceSession.transcript.push({
+                    role: 'user',
+                    text: inputTranscription.text
+                  })
+                  voiceSession.lastSpeaker = 'user'
+                }
               }
             }
 
@@ -73,7 +88,20 @@ export class VoiceService {
             if (outputTranscription?.text) {
               const voiceSession = this.sessions.get(client)
               if (voiceSession) {
-                voiceSession.transcript += `AI: ${outputTranscription.text}\n`
+                if (
+                  voiceSession.lastSpeaker === 'ai' &&
+                  voiceSession.transcript.length > 0
+                ) {
+                  const last =
+                    voiceSession.transcript[voiceSession.transcript.length - 1]
+                  last.text += outputTranscription.text
+                } else {
+                  voiceSession.transcript.push({
+                    role: 'ai',
+                    text: outputTranscription.text
+                  })
+                  voiceSession.lastSpeaker = 'ai'
+                }
               }
             }
 
@@ -91,7 +119,7 @@ export class VoiceService {
                 if (part.text && typeof part.text === 'string') {
                   const voiceSession = this.sessions.get(client)
                   if (voiceSession) {
-                    voiceSession.thinking += `${part.text}\n`
+                    voiceSession.currentThinking += part.text
                   }
                 }
               }
@@ -99,6 +127,20 @@ export class VoiceService {
 
             // Turn complete
             if (sc.turnComplete) {
+              const voiceSession = this.sessions.get(client)
+              if (voiceSession && voiceSession.currentThinking) {
+                // Attach accumulated thinking to the last AI entry
+                const lastAi = [...voiceSession.transcript]
+                  .reverse()
+                  .find((e) => e.role === 'ai')
+                if (lastAi) {
+                  lastAi.thinking = voiceSession.currentThinking
+                }
+                voiceSession.currentThinking = ''
+              }
+              if (voiceSession) {
+                voiceSession.lastSpeaker = null
+              }
               this.send(client, 'turn_complete', {})
             }
           }
@@ -123,8 +165,9 @@ export class VoiceService {
     this.sessions.set(client, {
       geminiSession: session,
       deviceUuid,
-      transcript: '',
-      thinking: ''
+      transcript: [],
+      lastSpeaker: null,
+      currentThinking: ''
     })
     this.send(client, 'ready', {})
 
@@ -149,11 +192,11 @@ export class VoiceService {
 
   endSession(
     client: WebSocket
-  ): { deviceUuid: string; transcript: string; thinking: string } | null {
+  ): { deviceUuid: string; transcript: TranscriptEntry[] } | null {
     const session = this.sessions.get(client)
     if (!session) return null
 
-    const { deviceUuid, transcript, thinking } = session
+    const { deviceUuid, transcript } = session
 
     try {
       session.geminiSession.close()
@@ -164,7 +207,7 @@ export class VoiceService {
     this.sessions.delete(client)
     this.send(client, 'ended', {})
 
-    return { deviceUuid, transcript, thinking }
+    return { deviceUuid, transcript }
   }
 
   getSession(client: WebSocket): VoiceSession | undefined {

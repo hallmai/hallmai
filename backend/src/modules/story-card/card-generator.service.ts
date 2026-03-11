@@ -79,7 +79,11 @@ export class CardGeneratorService {
 
         // Combine transcripts
         const combinedTranscript = conversations
-          .map((c) => c.transcript)
+          .map((c) =>
+            c.transcript
+              ? c.transcript.map((e) => `${e.role}: ${e.text}`).join('\n')
+              : ''
+          )
           .filter(Boolean)
           .join('\n---\n')
 

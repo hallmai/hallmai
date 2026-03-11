@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Between, Repository } from 'typeorm'
-import { Conversation } from '../../common/entity/conversation.entity'
+import {
+  Conversation,
+  type TranscriptEntry
+} from '../../common/entity/conversation.entity'
 
 @Injectable()
 export class ConversationService {
@@ -18,11 +21,7 @@ export class ConversationService {
     return this.conversationRepository.save(conversation)
   }
 
-  async end(
-    id: number,
-    transcript: string | null,
-    thinking: string | null
-  ): Promise<void> {
+  async end(id: number, transcript: TranscriptEntry[] | null): Promise<void> {
     const now = new Date()
     const conversation = await this.conversationRepository.findOneBy({ id })
     if (!conversation) return
@@ -34,8 +33,7 @@ export class ConversationService {
     await this.conversationRepository.update(id, {
       endedAt: now,
       durationSeconds,
-      transcript: transcript || null,
-      thinking: thinking || null
+      transcript: transcript || null
     })
   }
 
