@@ -5,7 +5,7 @@
 ## 프로젝트 구조
 
 - `frontend/` — Next.js 16 + React 19 + TypeScript (App Router)
-- `backend/` — NestJS 11 + TypeORM + MySQL
+- `backend/` — NestJS 11 + TypeORM + PostgreSQL
 - `docs/` — 기획서
 
 ## 개발 환경
@@ -29,7 +29,7 @@
 
 ### 백엔드
 - NestJS 11, TypeScript
-- TypeORM + MySQL
+- TypeORM + PostgreSQL
 - JWT + Passport (인증)
 - Google Auth (소셜 로그인)
 
@@ -91,4 +91,5 @@
 
 ## 문서
 
-- docs/hallmai-spec.md — v0.2 MVP 기획서
+- docs/specs/v0.2.md — v0.2 MVP 기획서
+- docs/features.md — 피쳐 목록 (F-01 ~ F-25)
