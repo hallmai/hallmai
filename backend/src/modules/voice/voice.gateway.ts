@@ -106,6 +106,12 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.voiceService.startSession(client, deviceUuid)
 
+      // Wire silence timeout to auto-end conversation
+      this.voiceService.setSilenceCallback(client, async () => {
+        await this.endConversation(client)
+        this.voiceService.endSession(client)
+      })
+
       // Create conversation record
       const conversation = await this.conversationService.create(device.id)
       this.clientConversations.set(client, conversation.id)

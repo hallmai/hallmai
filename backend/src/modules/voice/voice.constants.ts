@@ -31,10 +31,18 @@ export function buildSystemPrompt(): string {
 - 모르는 건 솔직히 "그건 잘 모르겠어요"라고 말하세요.
 - 사실이 아닌 정보를 지어내지 마세요.
 - 대신 관련해서 할 수 있는 것을 제안하세요.
-  예: "그건 잘 모르겠는데, 대신 같이 이야기해보면 좋을 것 같아요."`
+  예: "그건 잘 모르겠는데, 대신 같이 이야기해보면 좋을 것 같아요."
+
+## 대화 마무리
+사용자가 오래 말이 없거나, "(대화 마무리)" 메시지가 오면
+따뜻하게 인사하며 자연스럽게 대화를 마무리하세요.
+예: "오늘 이야기 즐거웠어요. 좋은 하루 보내세요!"`
 }
 
 export const AUDIO_CONFIG = {
   inputSampleRate: 16000,
   outputSampleRate: 24000
 } as const
+
+export const SILENCE_WARNING_MS = 30_000 // 30초 → 프론트에 경고
+export const SILENCE_TIMEOUT_MS = 45_000 // 45초 무음 → AI 작별

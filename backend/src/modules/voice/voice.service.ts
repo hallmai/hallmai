@@ -3,7 +3,12 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type WebSocket from 'ws'
 import type { TranscriptEntry } from '../../common/entity/conversation.entity'
-import { AUDIO_CONFIG, buildSystemPrompt } from './voice.constants'
+import {
+  AUDIO_CONFIG,
+  SILENCE_TIMEOUT_MS,
+  SILENCE_WARNING_MS,
+  buildSystemPrompt
+} from './voice.constants'
 
 interface VoiceSession {
   geminiSession: Session
@@ -11,6 +16,9 @@ interface VoiceSession {
   transcript: TranscriptEntry[]
   lastSpeaker: 'user' | 'ai' | null
   currentThinking: string
+  silenceWarningTimer: ReturnType<typeof setTimeout> | null
+  silenceTimer: ReturnType<typeof setTimeout> | null
+  onSilenceTimeout: (() => void) | null
 }
 
 @Injectable()
@@ -62,6 +70,7 @@ export class VoiceService {
               | { text?: string }
               | undefined
             if (inputTranscription?.text) {
+              this.resetSilenceTimer(client)
               const voiceSession = this.sessions.get(client)
               if (voiceSession) {
                 if (
@@ -167,9 +176,13 @@ export class VoiceService {
       deviceUuid,
       transcript: [],
       lastSpeaker: null,
-      currentThinking: ''
+      currentThinking: '',
+      silenceWarningTimer: null,
+      silenceTimer: null,
+      onSilenceTimeout: null
     })
     this.send(client, 'ready', {})
+    this.resetSilenceTimer(client)
 
     // Trigger AI to greet first
     session.sendClientContent({
@@ -198,6 +211,8 @@ export class VoiceService {
 
     const { deviceUuid, transcript } = session
 
+    this.clearSilenceTimers(session)
+
     try {
       session.geminiSession.close()
     } catch (err) {
@@ -212,6 +227,55 @@ export class VoiceService {
 
   getSession(client: WebSocket): VoiceSession | undefined {
     return this.sessions.get(client)
+  }
+
+  setSilenceCallback(client: WebSocket, callback: () => void): void {
+    const session = this.sessions.get(client)
+    if (session) {
+      session.onSilenceTimeout = callback
+    }
+  }
+
+  resetSilenceTimer(client: WebSocket): void {
+    const session = this.sessions.get(client)
+    if (!session) return
+
+    this.clearSilenceTimers(session)
+
+    session.silenceWarningTimer = setTimeout(() => {
+      this.send(client, 'silence_warning', {})
+    }, SILENCE_WARNING_MS)
+
+    session.silenceTimer = setTimeout(() => {
+      // Ask AI to say goodbye
+      session.geminiSession.sendClientContent({
+        turns: [
+          { role: 'user', parts: [{ text: '(대화 마무리)' }] }
+        ],
+        turnComplete: true
+      })
+      // Wait for AI to finish speaking, then trigger timeout callback
+      const checkComplete = () => {
+        // Give AI time to respond and speak, then end
+        setTimeout(() => {
+          if (session.onSilenceTimeout) {
+            session.onSilenceTimeout()
+          }
+        }, 8000)
+      }
+      checkComplete()
+    }, SILENCE_TIMEOUT_MS)
+  }
+
+  private clearSilenceTimers(session: VoiceSession): void {
+    if (session.silenceWarningTimer) {
+      clearTimeout(session.silenceWarningTimer)
+      session.silenceWarningTimer = null
+    }
+    if (session.silenceTimer) {
+      clearTimeout(session.silenceTimer)
+      session.silenceTimer = null
+    }
   }
 
   private send(
