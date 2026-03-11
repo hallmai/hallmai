@@ -122,6 +122,10 @@ resource "google_cloud_run_v2_service" "backend" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [client, client_version, template[0].scaling]
+  }
+
   depends_on = [
     google_secret_manager_secret_version.db_password,
     google_secret_manager_secret_version.jwt_secret,

@@ -63,6 +63,14 @@
 - `/privacy` — 개인정보처리방침
 - `/marketing-terms` — 마케팅 약관
 
+## 브랜치 & 배포 규칙
+
+- **기능 개발**: 버전 브랜치 (`0.3`, `0.4` ...)
+- **인프라/설정 수정**: `main`에 직접 커밋 (terraform apply 적용 확인 후 push)
+- **위험한 변경** (DB 마이그레이션 등): 별도 브랜치 → PR
+- **앱 배포**: GitHub Actions (main push 시 자동)
+- **인프라 배포**: Terraform 수동 (`cd infra && terraform apply`)
+
 ## 문서
 
 - docs/hallmai-spec.md — v0.2 MVP 기획서

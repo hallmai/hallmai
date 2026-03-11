@@ -12,8 +12,14 @@ resource "google_sql_database_instance" "main" {
     availability_type = "ZONAL"
 
     ip_configuration {
-      ipv4_enabled    = false
+      ipv4_enabled    = true
       private_network = google_compute_network.vpc.id
+
+      # 로컬 개발용 — Cloud SQL Auth Proxy는 SSL 인증으로 보호됨
+      authorized_networks {
+        name  = "cloud-sql-proxy"
+        value = "0.0.0.0/0"
+      }
     }
 
     backup_configuration {

@@ -19,6 +19,16 @@ if ! command -v cloud-sql-proxy &>/dev/null; then
   exit 1
 fi
 
+# 인증 상태 확인 — 만료 시 안내
+if ! gcloud auth print-access-token &>/dev/null 2>&1; then
+  echo "⚠️  GCP 인증이 만료되었습니다. 아래 명령어를 실행하세요:"
+  echo ""
+  echo "  gcloud auth login"
+  echo "  gcloud auth application-default login"
+  echo ""
+  exit 1
+fi
+
 echo "Cloud SQL Proxy 시작: $INSTANCE → localhost:$PORT"
 cloud-sql-proxy "$INSTANCE" --port "$PORT" &
 PROXY_PID=$!
