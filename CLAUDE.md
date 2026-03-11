@@ -65,11 +65,29 @@
 
 ## 브랜치 & 배포 규칙
 
-- **기능 개발**: 버전 브랜치 (`0.3`, `0.4` ...)
-- **인프라/설정 수정**: `main`에 직접 커밋 (terraform apply 적용 확인 후 push)
-- **위험한 변경** (DB 마이그레이션 등): 별도 브랜치 → PR
-- **앱 배포**: GitHub Actions (main push 시 자동)
-- **인프라 배포**: Terraform 수동 (`cd infra && terraform apply`)
+### 마이너 릴리스 (0.x → 0.y)
+- main에서 `feat/MMDD-기능명` 브랜치 생성, 기능 개발
+- 릴리스 시 main에서 `release/0.y` 생성 → package.json 버전 업데이트
+- 포함할 feat만 release에 머지 → 통합 테스트
+- main 머지 → 태그 `v0.y.0` → release/feat 브랜치 삭제
+
+### 패치 릴리스 (핫픽스)
+- main에서 직접 fix → 태그 `v0.y.1`
+- release 브랜치 존재 시 핫픽스를 release에도 즉시 머지
+
+### 브랜치 네이밍
+- `feat/MMDD-기능명`, `fix/MMDD-버그명`, `release/버전`
+
+### 배포
+- 앱: GitHub Actions (main push 시 자동)
+- 인프라: Terraform 수동 (`cd infra && terraform apply`), main 직접 커밋
+
+### 기타
+- worktree 작업: WorktreeCreate hook이 backend/.env를 자동 복사함
+- 머지 완료된 브랜치는 삭제
+- feat 브랜치는 주기적으로 main rebase/merge
+- 미포함 feat는 다음 릴리스 전 main rebase
+- release 테스트는 로컬 환경
 
 ## 문서
 
