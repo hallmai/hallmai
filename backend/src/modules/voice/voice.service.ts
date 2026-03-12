@@ -12,6 +12,7 @@ import type { TranscriptEntry } from '../../common/entity/conversation.entity'
 import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import {
   AUDIO_CONFIG,
+  type RecentSummary,
   SILENCE_TIMEOUT_MS,
   SILENCE_WARNING_MS,
   buildSystemPrompt
@@ -42,7 +43,8 @@ export class VoiceService {
   async startSession(
     client: WebSocket,
     deviceUuid: string,
-    soulContext?: string
+    soulContext?: string,
+    recentSummaries?: RecentSummary[]
   ): Promise<void> {
     const model =
       this.config.get<string>('GEMINI_VOICE_MODEL') ||
@@ -53,10 +55,11 @@ export class VoiceService {
       model,
       config: {
         responseModalities: [Modality.AUDIO],
+        tools: [{ googleSearch: {} }],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
         systemInstruction: {
-          parts: [{ text: buildSystemPrompt(soulContext) }]
+          parts: [{ text: buildSystemPrompt(soulContext, recentSummaries) }]
         },
         speechConfig: {
           languageCode: 'ko-KR'

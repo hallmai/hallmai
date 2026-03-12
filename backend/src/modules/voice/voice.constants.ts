@@ -1,6 +1,14 @@
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
-export function buildSystemPrompt(soulContext?: string): string {
+export interface RecentSummary {
+  date: Date
+  summary: string
+}
+
+export function buildSystemPrompt(
+  soulContext?: string,
+  recentSummaries?: RecentSummary[]
+): string {
   const now = new Date(
     new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })
   )
@@ -36,7 +44,27 @@ export function buildSystemPrompt(soulContext?: string): string {
 ## 대화 마무리
 사용자가 오래 말이 없거나, "(대화 마무리)" 메시지가 오면
 따뜻하게 인사하며 자연스럽게 대화를 마무리하세요.
-예: "오늘 이야기 즐거웠어요. 좋은 하루 보내세요!"${soulContext ? `\n\n${soulContext}` : ''}`
+예: "오늘 이야기 즐거웠어요. 좋은 하루 보내세요!"${soulContext ? `\n\n${soulContext}` : ''}${recentSummaries?.length ? `\n\n${formatRecentSummaries(recentSummaries)}` : ''}`
+}
+
+function formatRecentSummaries(summaries: RecentSummary[]): string {
+  const header = `## 최근 대화 기록
+아래는 이 분과 최근에 나눈 대화 요약입니다.
+- 자연스러운 흐름에서만 참고하세요. 일부러 꺼내지 마세요.
+- 상대방이 먼저 관련 이야기를 꺼내면 그때 활용하세요.
+- "지난번에 ~라고 하셨죠?" 같은 직접 인용은 피하세요.
+- 대화 10마디 중 1~2번 정도만, 자연스럽게 스며들 듯 사용하세요.`
+
+  const lines = summaries.map((s) => {
+    const d = new Date(
+      s.date.toLocaleString('en-US', { timeZone: 'Asia/Seoul' })
+    )
+    const m = d.getMonth() + 1
+    const day = d.getDate()
+    return `- ${m}월 ${day}일: ${s.summary}`
+  })
+
+  return `${header}\n\n${lines.join('\n')}`
 }
 
 export const AUDIO_CONFIG = {

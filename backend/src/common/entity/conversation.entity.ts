@@ -29,4 +29,7 @@ export class Conversation extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   transcript: TranscriptEntry[] | null
+
+  @Column({ type: 'text', nullable: true })
+  summary: string | null
 }
