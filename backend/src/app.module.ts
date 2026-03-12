@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
 import { EntityModule } from './common/entity/entity.module'
+import { GeminiModule } from './common/gemini.module'
 import { LoggerModule } from './common/logger/logger.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { ConversationModule } from './modules/conversation/conversation.module'
@@ -31,6 +32,7 @@ import { VoiceModule } from './modules/voice/voice.module'
       }
     }),
     EntityModule,
+    GeminiModule,
     AuthModule,
     DeviceModule,
     PostModule,

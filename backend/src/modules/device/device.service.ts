@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomInt } from 'crypto'
 import { IsNull, Not, Repository } from 'typeorm'
+import { uuidv7 } from 'uuidv7'
 import { Device } from '../../common/entity/device.entity'
 import { CustomHttpException } from '../../common/response/custom-http.exception'
 import { ErrorCode } from '../../common/response/error-code.enum'
@@ -20,7 +21,9 @@ export class DeviceService {
     | { linked: false; code: string; expiresAt: Date }
   > {
     // Upsert: insert if not exists, do nothing on conflict
-    await this.deviceRepository.upsert({ deviceUuid }, ['deviceUuid'])
+    await this.deviceRepository.upsert({ deviceUuid, pid: uuidv7() }, [
+      'deviceUuid'
+    ])
     const device = await this.deviceRepository.findOneByOrFail({ deviceUuid })
 
     // 이미 연결된 디바이스면 연결 정보 반환

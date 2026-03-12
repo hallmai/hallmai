@@ -3,12 +3,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { GEMINI_CLIENT } from '../../common/gemini.provider'
+import { uuidv7 } from 'uuidv7'
 import type { TranscriptEntry } from '../../common/entity/conversation.entity'
 import {
   DeviceSoul,
   type SoulProfile
 } from '../../common/entity/device-soul.entity'
+import { GEMINI_CLIENT } from '../../common/gemini.provider'
 
 const SOUL_PROMPT = `당신은 AI 말동무 '할마이'의 기억 관리자입니다.
 대화 기록을 분석하여 이 시니어에 대한 프로필을 업데이트합니다.
@@ -49,11 +50,16 @@ export class SoulService {
     conversationId: number,
     transcript: TranscriptEntry[]
   ): Promise<void> {
-    const transcriptText = transcript
+    const MAX_TRANSCRIPT_CHARS = 8000
+    let transcriptText = transcript
       .map((e) => `${e.role}: ${e.text}`)
       .join('\n')
 
     if (!transcriptText.trim()) return
+
+    if (transcriptText.length > MAX_TRANSCRIPT_CHARS) {
+      transcriptText = transcriptText.slice(-MAX_TRANSCRIPT_CHARS)
+    }
 
     // Load existing soul
     const existing = await this.soulRepository.findOneBy({ deviceId })
@@ -94,7 +100,12 @@ ${transcriptText}
       const profile = this.sanitizeProfile(parsed)
 
       await this.soulRepository.upsert(
-        { deviceId, profile, lastConversationId: conversationId },
+        {
+          deviceId,
+          profile,
+          lastConversationId: conversationId,
+          pid: uuidv7()
+        },
         { conflictPaths: ['deviceId'] }
       )
 
