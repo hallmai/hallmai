@@ -80,7 +80,8 @@ ${transcriptText}
 
       const response = await this.ai.models.generateContent({
         model,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: { responseMimeType: 'application/json' }
       })
 
       const text = response.text
@@ -89,15 +90,7 @@ ${transcriptText}
         return
       }
 
-      const jsonMatch = text.match(/\{[\s\S]*?\}/)
-      if (!jsonMatch) {
-        this.logger.warn(
-          `No JSON found in Gemini response for device ${deviceId}`
-        )
-        return
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>
+      const parsed = JSON.parse(text) as Record<string, unknown>
       const profile = this.sanitizeProfile(parsed)
 
       await this.soulRepository.upsert(

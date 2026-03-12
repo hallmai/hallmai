@@ -128,17 +128,14 @@ export class CardGeneratorService {
             role: 'user',
             parts: [{ text: `${CARD_PROMPT}\n\n대화 기록:\n${transcript}` }]
           }
-        ]
+        ],
+        config: { responseMimeType: 'application/json' }
       })
 
       const text = response.text
       if (!text) return null
 
-      // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*?\}/)
-      if (!jsonMatch) return null
-
-      const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>
+      const parsed = JSON.parse(text) as Record<string, unknown>
 
       // Validate required fields
       if (!parsed.topic || !parsed.quote || !parsed.vibe) return null
