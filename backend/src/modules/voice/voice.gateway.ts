@@ -111,10 +111,19 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
-      // Load soul context for system prompt
+      // Load soul context + recent summaries for system prompt
       const soulContext =
         (await this.soulService.getProfileText(device.id)) ?? undefined
-      await this.voiceService.startSession(client, deviceUuid, soulContext)
+      const recentSummaries = await this.conversationService.getRecentSummaries(
+        device.id,
+        3
+      )
+      await this.voiceService.startSession(
+        client,
+        deviceUuid,
+        soulContext,
+        recentSummaries.length ? recentSummaries : undefined
+      )
 
       // Wire silence timeout to auto-end conversation
       this.voiceService.setSilenceCallback(client, async () => {
@@ -159,13 +168,22 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.conversationService.end(conversationId, transcript)
 
-    // Soul extraction fire-and-forget
     if (transcript?.length) {
+      // Soul extraction fire-and-forget
       this.soulService
         .extract(deviceId, conversationId, transcript)
         .catch((err) =>
           this.logger.error(
             `Soul extraction failed for device ${deviceId}: ${String(err)}`
+          )
+        )
+
+      // Summary generation fire-and-forget
+      this.conversationService
+        .summarize(conversationId, transcript)
+        .catch((err) =>
+          this.logger.error(
+            `Summary generation failed for conversation ${conversationId}: ${String(err)}`
           )
         )
     }
