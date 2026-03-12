@@ -135,7 +135,7 @@ export class CardGeneratorService {
       if (!text) return null
 
       // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      const jsonMatch = text.match(/\{[\s\S]*?\}/)
       if (!jsonMatch) return null
 
       const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>
