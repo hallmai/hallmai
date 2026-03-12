@@ -33,6 +33,11 @@
 | F-29 | Soul 엔진 | 대화 종료 시 transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트. 다음 대화 시스템 프롬프트에 주입 | done |
 | F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색 | backlog |
 | F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API로 대화 중 유튜브 검색 | backlog |
+| F-32 | 시니어 친화 VAD 설정 | Gemini Live API VAD 민감도를 고령자 음성 특성에 맞춰 조정. startOfSpeech/endOfSpeech LOW, prefixPadding 400ms, silenceDuration 2000ms | done |
+| F-33 | 구조화 로깅 (Cloud Run) | NestJS 전체 로그를 Winston JSON 포맷으로 통합. NestLoggerAdapter, bufferLogs, AllExceptionsFilter console.error 제거 | done |
+| F-34 | Gemini JSON 모드 전환 | Soul 엔진·카드 생성기의 regex 기반 JSON 파싱을 responseMimeType: 'application/json'으로 교체 | done |
+| F-35 | GeminiProvider 전역화 | 3개 모듈에서 중복 등록된 GeminiProvider를 @Global() GeminiModule로 통합 | done |
+| F-36 | Prompt Injection 방어 | 카드 생성기에 transcript 격리 태그 및 지시문 무시 경고 추가 | done |
 
 ## 피쳐 의존관계
 
@@ -69,3 +74,8 @@
 | F-29 | F-24 ✅ | **핵심 블로커**: F-02, F-04, F-05 해제. transcript 기반 Soul 프로필 추출 |
 | F-30 | — | 독립, Gemini config에 tools 추가만 |
 | F-31 | — | 독립, YouTube Data API 키 필요 |
+| F-32 | — | ✅ done. 고령자 음성 연구 기반 값 설정 |
+| F-33 | — | ✅ done |
+| F-34 | F-29 ✅ | ✅ done. Soul 엔진·카드 생성기 JSON 파싱 개선 |
+| F-35 | — | ✅ done |
+| F-36 | F-29 ✅ | ✅ done. Soul 엔진은 기존 적용, 카드 생성기에 추가 |
