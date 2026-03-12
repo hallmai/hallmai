@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
-import { Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import { Cron } from '@nestjs/schedule'
 import { InjectRepository } from '@nestjs/typeorm'
 import { endOfDay, startOfDay, subDays } from 'date-fns'
@@ -25,19 +26,15 @@ JSON으로만 응답: {"topic": "...", "quote": "...", "vibe": "..."}`
 @Injectable()
 export class CardGeneratorService {
   private readonly logger = new Logger(CardGeneratorService.name)
-  private readonly ai: GoogleGenAI
 
   constructor(
     private readonly config: ConfigService,
+    @Inject(GEMINI_CLIENT) private readonly ai: GoogleGenAI,
     private readonly conversationService: ConversationService,
     private readonly storyCardService: StoryCardService,
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>
-  ) {
-    this.ai = new GoogleGenAI({
-      apiKey: this.config.get<string>('GEMINI_API_KEY')
-    })
-  }
+  ) {}
 
   @Cron('0 10 * * *', { timeZone: 'Asia/Seoul' })
   async generateDailyCards(): Promise<void> {
@@ -120,7 +117,9 @@ export class CardGeneratorService {
   ): Promise<DailyStoryData | null> {
     try {
       const model =
-        this.config.get<string>('GEMINI_MODEL') || 'gemini-2.5-flash'
+        this.config.get<string>('GEMINI_TEXT_MODEL') ||
+        this.config.get<string>('GEMINI_MODEL') ||
+        'gemini-2.5-flash'
 
       const response = await this.ai.models.generateContent({
         model,

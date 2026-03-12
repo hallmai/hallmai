@@ -1,6 +1,7 @@
 import { GoogleGenAI, Modality, Session } from '@google/genai'
-import { Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import type WebSocket from 'ws'
 import type { TranscriptEntry } from '../../common/entity/conversation.entity'
 import {
@@ -26,16 +27,19 @@ interface VoiceSession {
 export class VoiceService {
   private readonly logger = new Logger(VoiceService.name)
   private readonly sessions = new Map<WebSocket, VoiceSession>()
-  private readonly ai: GoogleGenAI
 
-  constructor(private readonly config: ConfigService) {
-    this.ai = new GoogleGenAI({
-      apiKey: this.config.get<string>('GEMINI_API_KEY')
-    })
-  }
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(GEMINI_CLIENT) private readonly ai: GoogleGenAI
+  ) {}
 
-  async startSession(client: WebSocket, deviceUuid: string): Promise<void> {
+  async startSession(
+    client: WebSocket,
+    deviceUuid: string,
+    soulContext?: string
+  ): Promise<void> {
     const model =
+      this.config.get<string>('GEMINI_VOICE_MODEL') ||
       this.config.get<string>('GEMINI_MODEL') ||
       'gemini-2.5-flash-native-audio-preview-12-2025'
 
@@ -45,7 +49,9 @@ export class VoiceService {
         responseModalities: [Modality.AUDIO],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
-        systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+        systemInstruction: {
+          parts: [{ text: buildSystemPrompt(soulContext) }]
+        },
         speechConfig: {
           languageCode: 'ko-KR'
         }
@@ -252,15 +258,15 @@ export class VoiceService {
     session.silenceTimer = setTimeout(() => {
       // Ask AI to say goodbye
       session.geminiSession.sendClientContent({
-        turns: [
-          { role: 'user', parts: [{ text: '(대화 마무리)' }] }
-        ],
+        turns: [{ role: 'user', parts: [{ text: '(대화 마무리)' }] }],
         turnComplete: true
       })
       // Give AI time to respond and speak, then end
       session.silenceGraceTimer = setTimeout(() => {
         if (session.onSilenceTimeout) {
-          session.onSilenceTimeout()
+          Promise.resolve(session.onSilenceTimeout()).catch((err) =>
+            this.logger.error(`Silence timeout handler error: ${String(err)}`)
+          )
         }
       }, 8000)
     }, SILENCE_TIMEOUT_MS)

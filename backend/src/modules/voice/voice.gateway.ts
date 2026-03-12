@@ -11,6 +11,7 @@ import { Repository } from 'typeorm'
 import type WebSocket from 'ws'
 import { Device } from '../../common/entity/device.entity'
 import { ConversationService } from '../conversation/conversation.service'
+import { SoulService } from '../soul/soul.service'
 import { VoiceService } from './voice.service'
 
 interface WsMessage {
@@ -18,14 +19,20 @@ interface WsMessage {
   data?: Record<string, unknown>
 }
 
+interface ClientSession {
+  conversationId: number
+  deviceId: number
+}
+
 @WebSocketGateway({ path: '/ws/voice' })
 export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(VoiceGateway.name)
-  private readonly clientConversations = new Map<WebSocket, number>()
+  private readonly clientSessions = new Map<WebSocket, ClientSession>()
 
   constructor(
     private readonly voiceService: VoiceService,
     private readonly conversationService: ConversationService,
+    private readonly soulService: SoulService,
     private readonly jwtService: JwtService,
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>
@@ -104,7 +111,10 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
-      await this.voiceService.startSession(client, deviceUuid)
+      // Load soul context for system prompt
+      const soulContext =
+        (await this.soulService.getProfileText(device.id)) ?? undefined
+      await this.voiceService.startSession(client, deviceUuid, soulContext)
 
       // Wire silence timeout to auto-end conversation
       this.voiceService.setSilenceCallback(client, async () => {
@@ -114,7 +124,10 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Create conversation record
       const conversation = await this.conversationService.create(device.id)
-      this.clientConversations.set(client, conversation.id)
+      this.clientSessions.set(client, {
+        conversationId: conversation.id,
+        deviceId: device.id
+      })
     } catch (err) {
       this.logger.error(`Failed to start session: ${String(err)}`)
       this.send(client, 'error', { message: 'Failed to connect to AI' })
@@ -136,14 +149,26 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private async endConversation(client: WebSocket): Promise<void> {
-    const conversationId = this.clientConversations.get(client)
-    if (!conversationId) return
+    const clientSession = this.clientSessions.get(client)
+    if (!clientSession) return
+    this.clientSessions.delete(client) // Atomic guard against concurrent calls
 
+    const { conversationId, deviceId } = clientSession
     const session = this.voiceService.getSession(client)
     const transcript = session?.transcript?.length ? session.transcript : null
 
     await this.conversationService.end(conversationId, transcript)
-    this.clientConversations.delete(client)
+
+    // Soul extraction fire-and-forget
+    if (transcript?.length) {
+      this.soulService
+        .extract(deviceId, conversationId, transcript)
+        .catch((err) =>
+          this.logger.error(
+            `Soul extraction failed for device ${deviceId}: ${String(err)}`
+          )
+        )
+    }
   }
 
   private send(

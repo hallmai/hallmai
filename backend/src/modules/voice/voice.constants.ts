@@ -1,6 +1,6 @@
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
-export function buildSystemPrompt(): string {
+export function buildSystemPrompt(soulContext?: string): string {
   const now = new Date(
     new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })
   )
@@ -36,7 +36,7 @@ export function buildSystemPrompt(): string {
 ## 대화 마무리
 사용자가 오래 말이 없거나, "(대화 마무리)" 메시지가 오면
 따뜻하게 인사하며 자연스럽게 대화를 마무리하세요.
-예: "오늘 이야기 즐거웠어요. 좋은 하루 보내세요!"`
+예: "오늘 이야기 즐거웠어요. 좋은 하루 보내세요!"${soulContext ? `\n\n${soulContext}` : ''}`
 }
 
 export const AUDIO_CONFIG = {

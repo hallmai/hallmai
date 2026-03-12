@@ -30,7 +30,9 @@
 | F-26 | 실시간 대화 자막 | 통화 중 시니어 화면에 AI/사용자 대화를 실시간 자막으로 표시 | backlog |
 | F-27 | 음성 통화 시뮬레이터 | 마이크 없이 텍스트로 음성 통화를 테스트할 수 있는 개발 도구 | backlog |
 | F-28 | 설정 UI 버전 노출 | 설정 화면에서 프론트엔드·백엔드 각각의 버전을 표시 | backlog |
-| F-29 | Soul 엔진 | 대화 종료 시 transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트. 다음 대화 시스템 프롬프트에 주입 | backlog |
+| F-29 | Soul 엔진 | 대화 종료 시 transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트. 다음 대화 시스템 프롬프트에 주입 | done |
+| F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색 | backlog |
+| F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API로 대화 중 유튜브 검색 | backlog |
 
 ## 피쳐 의존관계
 
@@ -65,3 +67,5 @@
 | F-27 | — | 개발 도구, 독립 |
 | F-28 | — | health API에 version 추가 + 설정 UI |
 | F-29 | F-24 ✅ | **핵심 블로커**: F-02, F-04, F-05 해제. transcript 기반 Soul 프로필 추출 |
+| F-30 | — | 독립, Gemini config에 tools 추가만 |
+| F-31 | — | 독립, YouTube Data API 키 필요 |
