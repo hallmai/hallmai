@@ -58,7 +58,13 @@ export class SoulService {
     if (!transcriptText.trim()) return
 
     if (transcriptText.length > MAX_TRANSCRIPT_CHARS) {
-      transcriptText = transcriptText.slice(-MAX_TRANSCRIPT_CHARS)
+      const lines = transcriptText.split('\n')
+      transcriptText = ''
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const next = lines[i] + (transcriptText ? '\n' : '') + transcriptText
+        if (next.length > MAX_TRANSCRIPT_CHARS) break
+        transcriptText = next
+      }
     }
 
     // Load existing soul
@@ -99,15 +105,17 @@ ${transcriptText}
       const parsed = JSON.parse(text) as Record<string, unknown>
       const profile = this.sanitizeProfile(parsed)
 
-      await this.soulRepository.upsert(
-        {
+      await this.soulRepository
+        .createQueryBuilder()
+        .insert()
+        .values({
           deviceId,
           profile,
           lastConversationId: conversationId,
           pid: uuidv7()
-        },
-        { conflictPaths: ['deviceId'] }
-      )
+        })
+        .orUpdate(['profile', 'last_conversation_id'], ['device_id'])
+        .execute()
 
       this.logger.log(`Soul updated for device ${deviceId}`)
     } catch (err) {

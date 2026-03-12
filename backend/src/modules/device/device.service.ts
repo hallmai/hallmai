@@ -20,10 +20,13 @@ export class DeviceService {
     | { linked: true; nickname: string | null; linkedAt: Date }
     | { linked: false; code: string; expiresAt: Date }
   > {
-    // Upsert: insert if not exists, do nothing on conflict
-    await this.deviceRepository.upsert({ deviceUuid, pid: uuidv7() }, [
-      'deviceUuid'
-    ])
+    // Insert if not exists, do nothing on conflict
+    await this.deviceRepository
+      .createQueryBuilder()
+      .insert()
+      .values({ deviceUuid, pid: uuidv7() })
+      .orIgnore()
+      .execute()
     const device = await this.deviceRepository.findOneByOrFail({ deviceUuid })
 
     // 이미 연결된 디바이스면 연결 정보 반환

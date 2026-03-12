@@ -3,13 +3,16 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
-  HttpStatus
+  HttpStatus,
+  Logger
 } from '@nestjs/common'
 import { Response } from 'express'
 import { ErrorCode } from './error-code.enum'
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name)
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
@@ -38,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         errorCode = this.mapStatusToErrorCode(status)
       }
     } else if (exception instanceof Error) {
-      console.error('Unhandled exception:', exception)
+      this.logger.error(exception.message, exception.stack)
       message = 'Internal server error'
     }
 

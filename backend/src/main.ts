@@ -4,6 +4,7 @@ import { WsAdapter } from '@nestjs/platform-ws'
 import { initializeTransactionalContext } from 'typeorm-transactional'
 import { AppModule } from './app.module'
 import { LoggerService } from './common/logger/logger.service'
+import { NestLoggerAdapter } from './common/logger/nest-logger.adapter'
 import { AllExceptionsFilter } from './common/response/error.filter'
 import { ResponseInterceptor } from './common/response/response.interceptor'
 
@@ -12,7 +13,7 @@ const PORT = process.env.PORT || 4000
 async function bootstrap() {
   initializeTransactionalContext()
 
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule, { bufferLogs: true })
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
@@ -31,6 +32,7 @@ async function bootstrap() {
 
   const reflector = app.get(Reflector)
   const loggerService = app.get(LoggerService)
+  app.useLogger(new NestLoggerAdapter(loggerService))
 
   app.useGlobalInterceptors(new ResponseInterceptor(reflector, loggerService))
   app.useGlobalFilters(new AllExceptionsFilter())
