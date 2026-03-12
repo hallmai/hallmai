@@ -98,7 +98,8 @@ ${wrapTranscript(text)}`
     const conversations = await this.conversationRepository.find({
       where: {
         deviceId,
-        summary: Not(IsNull())
+        summary: Not(IsNull()),
+        endedAt: Not(IsNull())
       },
       order: { startedAt: 'DESC' },
       take: count,

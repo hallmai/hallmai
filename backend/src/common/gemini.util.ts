@@ -44,7 +44,7 @@ export function formatTranscript(
  * Strips any existing transcript tags from the content to prevent tag escape.
  */
 export function wrapTranscript(text: string): string {
-  const escaped = text.replace(/<\/?transcript>/gi, '')
+  const escaped = text.replace(/<\s*\/?\s*transcript\s*\/?>/gi, '')
   return `<transcript>
 ${escaped}
 </transcript>
