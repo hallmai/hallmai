@@ -55,7 +55,6 @@ export class VoiceService {
       model,
       config: {
         responseModalities: [Modality.AUDIO],
-        tools: [{ googleSearch: {} }],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
         systemInstruction: {
