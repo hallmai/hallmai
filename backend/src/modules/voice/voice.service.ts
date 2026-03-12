@@ -1,9 +1,15 @@
-import { GoogleGenAI, Modality, Session } from '@google/genai'
+import {
+  EndSensitivity,
+  GoogleGenAI,
+  Modality,
+  Session,
+  StartSensitivity
+} from '@google/genai'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import type WebSocket from 'ws'
 import type { TranscriptEntry } from '../../common/entity/conversation.entity'
+import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import {
   AUDIO_CONFIG,
   SILENCE_TIMEOUT_MS,
@@ -54,6 +60,14 @@ export class VoiceService {
         },
         speechConfig: {
           languageCode: 'ko-KR'
+        },
+        realtimeInputConfig: {
+          automaticActivityDetection: {
+            startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
+            endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
+            prefixPaddingMs: 400,
+            silenceDurationMs: 2000
+          }
         }
       },
       callbacks: {
