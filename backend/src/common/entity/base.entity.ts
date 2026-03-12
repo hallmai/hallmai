@@ -12,7 +12,7 @@ export class BaseEntity extends _BaseEntity {
   @PrimaryGeneratedColumn('increment')
   id: number
 
-  @Column({ type: 'varchar', length: 36, unique: true })
+  @Column({ type: 'varchar', length: 36, unique: true, default: () => "gen_random_uuid()" })
   pid: string = uuidv7()
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
