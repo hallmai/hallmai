@@ -38,6 +38,8 @@
 | F-35 | GeminiProvider 전역화 | 3개 모듈에서 중복 등록된 GeminiProvider를 @Global() GeminiModule로 통합 | done |
 | F-36 | Prompt Injection 방어 | 카드 생성기에 transcript 격리 태그 및 지시문 무시 경고 추가 | done |
 | F-37 | Soul 성숙도 기반 프롬프트 | Soul 프로필 채워진 정도(explore/bonding/friend)에 따라 시스템 프롬프트 3단계 분화. 첫 대화 시 자기소개, 중간 단계에서 아는 정보 활용, 친밀 단계에서 기존 프롬프트 유지 | done |
+| F-38 | 설정 디바이스 UUID 노출 | 시니어(게스트) 설정 화면에 디바이스 UUID 표시. 디버깅·지원 용도 | backlog |
+| F-39 | 음성 볼륨 버튼 맥동 | 통화 중(listening/speaking) 실시간 오디오 볼륨에 따라 중앙 버튼 크기가 맥동하는 시각 피드백 | backlog |
 
 ## 피쳐 의존관계
 
@@ -79,3 +81,5 @@
 | F-35 | — | ✅ done |
 | F-36 | F-29 ✅ | ✅ done. Soul 엔진은 기존 적용, 카드 생성기에 추가 |
 | F-37 | F-29 ✅ | ✅ done. Soul 프로필 성숙도 기반 프롬프트 3단계 분화 |
+| F-38 | — | 독립. useDevice 훅에서 deviceUuid 읽어 설정 UI에 표시 |
+| F-39 | — | 독립. AudioRecorder/AudioPlayer에서 볼륨 레벨 추출 → 버튼 scale 반영 |
