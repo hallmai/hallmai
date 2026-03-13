@@ -70,7 +70,7 @@ export class VoiceService {
     const model =
       this.config.get<string>('GEMINI_VOICE_MODEL') ||
       this.config.get<string>('GEMINI_MODEL') ||
-      'gemini-live-2.5-flash-native-audio'
+      'gemini-2.5-flash-native-audio-preview-12-2025'
 
     const session = await this.ai.live.connect({
       model,
