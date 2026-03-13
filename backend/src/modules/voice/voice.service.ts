@@ -91,10 +91,10 @@ export class VoiceService {
         },
         realtimeInputConfig: {
           automaticActivityDetection: {
-            startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_HIGH,
+            startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
             endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
             prefixPaddingMs: 800,
-            silenceDurationMs: 2000
+            silenceDurationMs: 1000
           }
         }
       },
