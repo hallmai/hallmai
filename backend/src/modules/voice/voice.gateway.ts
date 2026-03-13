@@ -142,6 +142,14 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
         conversationId: conversation.id,
         deviceId: device.id
       })
+
+      // Client may have disconnected during async setup
+      if (client.readyState !== 1) {
+        this.logger.debug('Client disconnected during session setup, cleaning up')
+        await this.endConversation(client)
+        this.voiceService.endSession(client)
+        return
+      }
     } catch (err) {
       this.logger.error(`Failed to start session: ${String(err)}`)
       this.send(client, 'error', { message: 'Failed to connect to AI' })
