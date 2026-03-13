@@ -61,7 +61,9 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.on('message', (raw: Buffer | string) => {
       try {
         const msg = JSON.parse(raw.toString()) as WsMessage
-        void this.handleMessage(client, msg)
+        this.handleMessage(client, msg).catch((err) =>
+          this.logger.error(`Message handler error: ${String(err)}`)
+        )
       } catch (err) {
         this.logger.error(`Message parse error: ${String(err)}`)
       }
@@ -158,6 +160,7 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (err) {
       this.logger.error(`Failed to start session: ${String(err)}`)
       this.send(client, 'error', { message: 'Failed to connect to AI' })
+      this.voiceService.endSession(client)
     }
   }
 

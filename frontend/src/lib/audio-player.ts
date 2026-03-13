@@ -3,18 +3,18 @@ export class AudioPlayer {
   private nextStartTime = 0
   private sources: AudioBufferSourceNode[] = []
 
-  private ensureContext(): AudioContext {
+  private async ensureContext(): Promise<AudioContext> {
     if (!this.audioContext) {
       this.audioContext = new AudioContext({ sampleRate: 24000 })
     }
     if (this.audioContext.state === 'suspended') {
-      this.audioContext.resume()
+      await this.audioContext.resume()
     }
     return this.audioContext
   }
 
-  enqueue(base64: string): void {
-    const ctx = this.ensureContext()
+  async enqueue(base64: string): Promise<void> {
+    const ctx = await this.ensureContext()
 
     const int16 = base64ToInt16(base64)
     const float32 = int16ToFloat32(int16)
