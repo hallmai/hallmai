@@ -94,7 +94,7 @@ export class VoiceService {
             startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_HIGH,
             endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
             prefixPaddingMs: 800,
-            silenceDurationMs: 1000
+            silenceDurationMs: 2000
           }
         }
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { useDevice } from "@/hooks/use-device";
@@ -15,10 +15,34 @@ const getServerAuthSnapshot = () => false;
 export default function CallPage() {
   const { t } = useI18n();
   const { deviceUuid, linkCode, linked, loading } = useDevice();
-  const { state, error, silenceWarning, start, stop } = useVoice(deviceUuid);
+  const { state, error, silenceWarning, volumeRef, start, stop } = useVoice(deviceUuid);
   const { setCallActive } = useCallState();
   const [cycle, setCycle] = useState(0);
   const isLoggedIn = useSyncExternalStore(subscribeAuth, getAuthSnapshot, getServerAuthSnapshot);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const rafRef = useRef(0);
+
+  const animateVolume = useCallback(() => {
+    const btn = buttonRef.current;
+    if (btn) {
+      const v = volumeRef.current;
+      const scale = 1.0 + v * 0.15;
+      btn.style.transform = `scale(${scale})`;
+    }
+    rafRef.current = requestAnimationFrame(animateVolume);
+  }, [volumeRef]);
+
+  useEffect(() => {
+    if (state === "listening") {
+      rafRef.current = requestAnimationFrame(animateVolume);
+    } else {
+      cancelAnimationFrame(rafRef.current);
+      if (buttonRef.current) {
+        buttonRef.current.style.transform = "";
+      }
+    }
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [state, animateVolume]);
 
   useEffect(() => {
     setCallActive(state !== "idle");
@@ -112,12 +136,13 @@ export default function CallPage() {
 
         {/* Button */}
         <button
+          ref={buttonRef}
           onClick={handleTap}
           disabled={loading}
-          className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-all duration-300 disabled:opacity-50"
+          className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-[background-color] duration-300 disabled:opacity-50"
           style={{
             backgroundColor: buttonColor,
-            transform: isActive ? "scale(1.08)" : "scale(1)",
+            transform: state === "speaking" ? "scale(1.08)" : "scale(1)",
           }}
         >
           {isError && (

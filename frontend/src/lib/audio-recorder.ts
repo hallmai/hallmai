@@ -3,9 +3,14 @@ export class AudioRecorder {
   private stream: MediaStream | null = null
   private workletNode: AudioWorkletNode | null = null
   private onData: ((base64: string) => void) | null = null
+  private onVolume: ((level: number) => void) | null = null
 
-  async start(onData: (base64: string) => void): Promise<void> {
+  async start(
+    onData: (base64: string) => void,
+    onVolume?: (level: number) => void,
+  ): Promise<void> {
     this.onData = onData
+    this.onVolume = onVolume ?? null
 
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -24,6 +29,9 @@ export class AudioRecorder {
 
     this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
       const float32 = event.data
+      if (this.onVolume) {
+        this.onVolume(rms(float32))
+      }
       const int16 = float32ToInt16(float32)
       const base64 = arrayBufferToBase64(int16.buffer as ArrayBuffer)
       this.onData?.(base64)
@@ -41,7 +49,14 @@ export class AudioRecorder {
     this.audioContext?.close()
     this.audioContext = null
     this.onData = null
+    this.onVolume = null
   }
+}
+
+function rms(buf: Float32Array): number {
+  let sum = 0
+  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i]
+  return Math.min(1, Math.sqrt(sum / buf.length) * 5)
 }
 
 function float32ToInt16(float32: Float32Array): Int16Array {

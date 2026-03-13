@@ -13,6 +13,7 @@ interface WsMessage {
 export type VoiceEventHandler = {
   onStateChange: (state: VoiceState) => void
   onError: (message: string) => void
+  onVolume?: (level: number) => void
   onSilenceWarning?: () => void
   onToolActivity?: (data: Record<string, unknown>) => void
 }
@@ -128,9 +129,14 @@ export class VoiceClient {
 
   private async startRecording(): Promise<void> {
     this.recorder = new AudioRecorder()
-    await this.recorder.start((base64) => {
-      this.send('audio', { data: base64 })
-    })
+    await this.recorder.start(
+      (base64) => {
+        this.send('audio', { data: base64 })
+      },
+      this.handler.onVolume
+        ? (level) => this.handler.onVolume!(level)
+        : undefined,
+    )
   }
 
   private send(event: string, data: Record<string, unknown>): void {

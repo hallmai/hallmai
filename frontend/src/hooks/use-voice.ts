@@ -7,6 +7,7 @@ export function useVoice(deviceUuid: string | null) {
   const [state, setState] = useState<VoiceState>('idle')
   const [error, setError] = useState<string | null>(null)
   const [silenceWarning, setSilenceWarning] = useState(false)
+  const volumeRef = useRef(0)
   const clientRef = useRef<VoiceClient | null>(null)
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -18,6 +19,9 @@ export function useVoice(deviceUuid: string | null) {
         setError(msg)
         if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
         errorTimerRef.current = setTimeout(() => setError(null), 3000)
+      },
+      onVolume: (level) => {
+        volumeRef.current = level
       },
       onToolActivity: (data) => {
         console.debug('[voice] tool_activity', data)
@@ -48,5 +52,5 @@ export function useVoice(deviceUuid: string | null) {
     await clientRef.current?.disconnect()
   }, [])
 
-  return { state, error, silenceWarning, start, stop }
+  return { state, error, silenceWarning, volumeRef, start, stop }
 }
