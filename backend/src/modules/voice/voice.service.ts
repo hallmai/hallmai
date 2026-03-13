@@ -9,6 +9,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type WebSocket from 'ws'
 import type { TranscriptEntry } from '../../common/entity/conversation.entity'
+import type { SoulMaturity } from '../../common/entity/device-soul.entity'
 import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import {
   AUDIO_CONFIG,
@@ -50,7 +51,8 @@ export class VoiceService {
     client: WebSocket,
     deviceUuid: string,
     soulContext?: string,
-    recentSummaries?: RecentSummary[]
+    recentSummaries?: RecentSummary[],
+    maturity?: SoulMaturity
   ): Promise<void> {
     const model =
       this.config.get<string>('GEMINI_VOICE_MODEL') ||
@@ -65,7 +67,11 @@ export class VoiceService {
         outputAudioTranscription: {},
         tools: [{ googleSearch: {} }],
         systemInstruction: {
-          parts: [{ text: buildSystemPrompt(soulContext, recentSummaries) }]
+          parts: [
+            {
+              text: buildSystemPrompt(soulContext, recentSummaries, maturity)
+            }
+          ]
         },
         speechConfig: {
           languageCode: 'ko-KR'

@@ -3,6 +3,8 @@ import { BaseEntity } from './base.entity'
 import { Conversation } from './conversation.entity'
 import { Device } from './device.entity'
 
+export type SoulMaturity = 'explore' | 'bonding' | 'friend'
+
 export interface SoulProfile {
   // === AI Soul (AI의 자아/관계성) ===
   tone?: string // 이 분과의 대화 톤 ("유머 잘 받아주셔서 장난스럽게", "차분하고 다정하게")

@@ -7,6 +7,7 @@ import { uuidv7 } from 'uuidv7'
 import type { TranscriptEntry } from '../../common/entity/conversation.entity'
 import {
   DeviceSoul,
+  type SoulMaturity,
   type SoulProfile
 } from '../../common/entity/device-soul.entity'
 import { GEMINI_CLIENT } from '../../common/gemini.provider'
@@ -125,36 +126,62 @@ ${wrapTranscript(transcriptText)}`
     )
   }
 
-  async getProfileText(deviceId: number): Promise<string | null> {
+  async getProfileWithMaturity(
+    deviceId: number
+  ): Promise<{ profileText: string | null; maturity: SoulMaturity }> {
     const soul = await this.soulRepository.findOneBy({ deviceId })
-    if (!soul) return null
+    if (!soul) return { profileText: null, maturity: 'explore' }
 
-    const p = soul.profile
+    const profileText = this.formatProfileText(soul.profile)
+    const maturity = this.calculateMaturity(soul.profile)
+    return { profileText, maturity }
+  }
+
+  // AI 필드(tone, sharedMemories, strategies)는 제외 —
+  // 성숙도는 "사용자에 대해 얼마나 아는가"를 기준으로 판단.
+  // AI 필드는 첫 대화 1회만으로도 채워질 수 있어 성숙도 지표로 부적합.
+  private calculateMaturity(profile: SoulProfile): SoulMaturity {
+    const userFields = [
+      profile.interests,
+      profile.family,
+      profile.routines,
+      profile.emotions,
+      profile.preferences
+    ]
+    const filledCount = userFields.filter(
+      (f) => Array.isArray(f) && f.length > 0
+    ).length
+
+    if (filledCount <= 1) return 'explore'
+    if (filledCount <= 3) return 'bonding'
+    return 'friend'
+  }
+
+  private formatProfileText(p: SoulProfile): string | null {
+    const fmt = (label: string, arr?: string[]) =>
+      arr?.length ? `${label}: ${arr.join(', ')}` : null
+
     const sections: string[] = []
 
     // AI Soul section
-    const aiParts: string[] = []
-    if (p.tone) aiParts.push(`대화 톤: ${p.tone}`)
-    if (p.sharedMemories?.length)
-      aiParts.push(`공유 기억: ${p.sharedMemories.join(', ')}`)
-    if (p.strategies?.length)
-      aiParts.push(`대화 전략: ${p.strategies.join(', ')}`)
+    const aiParts = [
+      p.tone ? `대화 톤: ${p.tone}` : null,
+      fmt('공유 기억', p.sharedMemories),
+      fmt('대화 전략', p.strategies)
+    ].filter(Boolean) as string[]
 
     if (aiParts.length) {
       sections.push(`## 당신(할마이)과 이 분의 관계\n${aiParts.join('\n')}`)
     }
 
     // User Profile section
-    const userParts: string[] = []
-    if (p.interests?.length)
-      userParts.push(`관심사/취미: ${p.interests.join(', ')}`)
-    if (p.family?.length) userParts.push(`가족 관계: ${p.family.join(', ')}`)
-    if (p.routines?.length)
-      userParts.push(`일상 패턴: ${p.routines.join(', ')}`)
-    if (p.emotions?.length)
-      userParts.push(`감정 경향: ${p.emotions.join(', ')}`)
-    if (p.preferences?.length)
-      userParts.push(`대화 선호: ${p.preferences.join(', ')}`)
+    const userParts = [
+      fmt('관심사/취미', p.interests),
+      fmt('가족 관계', p.family),
+      fmt('일상 패턴', p.routines),
+      fmt('감정 경향', p.emotions),
+      fmt('대화 선호', p.preferences)
+    ].filter(Boolean) as string[]
 
     if (userParts.length) {
       sections.push(`## 이 분에 대해 알고 있는 정보\n${userParts.join('\n')}`)

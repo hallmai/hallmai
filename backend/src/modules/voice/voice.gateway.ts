@@ -111,18 +111,19 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
-      // Load soul context + recent summaries for system prompt
-      const soulContext =
-        (await this.soulService.getProfileText(device.id)) ?? undefined
-      const recentSummaries = await this.conversationService.getRecentSummaries(
-        device.id,
-        3
-      )
+      // Load soul context + recent summaries in parallel for system prompt
+      const [{ profileText, maturity }, recentSummaries] = await Promise.all([
+        this.soulService.getProfileWithMaturity(device.id),
+        this.conversationService.getRecentSummaries(device.id, 3)
+      ])
+      this.logger.debug(`Soul maturity: ${maturity} for device ${deviceUuid}`)
+      const soulContext = profileText ?? undefined
       await this.voiceService.startSession(
         client,
         deviceUuid,
         soulContext,
-        recentSummaries.length ? recentSummaries : undefined
+        recentSummaries.length ? recentSummaries : undefined,
+        maturity
       )
 
       // Wire silence timeout to auto-end conversation
