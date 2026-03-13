@@ -89,9 +89,7 @@ export class VoiceClient {
     switch (msg.event) {
       case 'ready':
         this.player = new AudioPlayer()
-        this.startRecording()
-          .then(() => this.setState('listening'))
-          .catch(() => {
+        this.startRecording().catch(() => {
             this.handler.onError('Microphone access denied')
             this.cleanup()
             this.setState('idle')
@@ -99,7 +97,7 @@ export class VoiceClient {
         break
       case 'audio':
         if (msg.data?.data) {
-          if (this.state === 'listening') {
+          if (this.state === 'listening' || this.state === 'connecting') {
             this.setState('speaking')
           }
           this.player?.enqueue(msg.data.data as string)
