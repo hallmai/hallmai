@@ -72,7 +72,7 @@ export class LoggerService {
         break
       case 'object':
         if (expressLogParserOptions.filterParameters.length !== 0) {
-          str = JSON.stringify(params, (key, value) => {
+          str = JSON.stringify(params, (key, value: unknown) => {
             if (expressLogParserOptions.filterParameters.includes(key)) {
               return this.loggerModuleOptions.expressLogParserOptions
                 .filteredValue
@@ -102,17 +102,19 @@ export class LoggerService {
   }
 
   makeRequestLogData(req: Request): ExpressRequestLogFormat {
-    let requestBody
+    let requestBody: unknown
     if (
       this.loggerModuleOptions.expressLogParserOptions.filterParameters
         .length !== 0
     ) {
-      requestBody = this.filterParams(req.body)
+      requestBody = this.filterParams(req.body as unknown)
       try {
-        requestBody = JSON.parse(requestBody)
-      } catch {}
+        requestBody = JSON.parse(requestBody as string)
+      } catch {
+        /* ignore parse errors */
+      }
     } else {
-      requestBody = req.body
+      requestBody = req.body as unknown
     }
     return {
       originalUrl: req.originalUrl,

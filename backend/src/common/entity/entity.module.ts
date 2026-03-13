@@ -21,7 +21,7 @@ import { entities } from './entity.providers'
         entities,
         logger: new TypeormLogger(loggerService)
       }),
-      async dataSourceFactory(option) {
+      dataSourceFactory(option) {
         if (option == null) {
           throw new Error('Invalid typeorm options passed')
         }

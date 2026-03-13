@@ -18,7 +18,7 @@ export class CustomTypeOrmModule {
     const providers: Provider[] = []
 
     for (const RepositoryClass of repositories) {
-      const entity = Reflect.getMetadata(
+      const entity: unknown = Reflect.getMetadata(
         TYPEORM_CUSTOM_REPOSITORY,
         RepositoryClass
       )
@@ -28,7 +28,10 @@ export class CustomTypeOrmModule {
         inject: [getDataSourceToken(dataSource)],
         provide: RepositoryClass,
         useFactory: (ds: DataSource): InstanceType<T> => {
-          const baseRepository = ds.getRepository<any>(entity)
+          const baseRepository = ds.getRepository(
+            entity as Parameters<DataSource['getRepository']>[0]
+          )
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return new RepositoryClass(
             baseRepository.target,
             baseRepository.manager,

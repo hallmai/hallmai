@@ -1,7 +1,7 @@
 export interface TypeormMeta {
   message?: string
   query?: string
-  parameters?: any
+  parameters?: unknown[]
   error?: Error
   time?: number
 }
@@ -9,7 +9,7 @@ export interface TypeormMeta {
 export interface TypeOrmStackInfo {
   query?: string
   message?: string
-  parameters?: any
+  parameters?: unknown[] | string
   error?: Error
   time?: number
 }

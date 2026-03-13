@@ -5,7 +5,7 @@ import { TypeormMeta, TypeOrmStackInfo } from './typeorm-logger.interface'
 export class TypeormLogger implements Logger {
   constructor(private readonly loggerService: LoggerService) {}
 
-  log(level: 'log' | 'info' | 'warn', message: any): void {
+  log(level: 'log' | 'info' | 'warn', message: string): void {
     const stackInfo = this.getStackInfo({ message })
     this.loggerService.debug('[TypeOrmLogger - log]', { meta: stackInfo })
   }
@@ -48,7 +48,10 @@ export class TypeormLogger implements Logger {
     return {
       query:
         meta?.query?.replace(/(\r\n|\n|\r)/gm, '').replace(/\s+/g, ' ') ?? '',
-      parameters: meta?.parameters?.length ? meta.parameters : '[]',
+      parameters:
+        Array.isArray(meta?.parameters) && meta.parameters.length
+          ? meta.parameters
+          : '[]',
       time: meta?.time ?? 0,
       message: meta?.message ?? ''
     }

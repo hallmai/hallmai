@@ -30,7 +30,7 @@ export class WinstonLogger {
         winston.format.colorize(),
         logFormat(),
         winston.format.printf((info: TransformableInfo) => {
-          return `${info.datetime} ${info.level}: ${inspect(
+          return `${String(info.datetime)} ${info.level}: ${inspect(
             {
               message: info.message,
               data: info.data

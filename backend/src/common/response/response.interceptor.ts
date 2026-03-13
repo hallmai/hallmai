@@ -62,10 +62,10 @@ export class ResponseInterceptor implements NestInterceptor {
 
     const startTime = Date.now()
     const originalSend = res.send
-    res.send = (responseBody: any) => {
+    res.send = (responseBody: unknown) => {
       const status = res.statusCode
       const message = `${req.method} ${req.url}`
-      const error = res.locals['error']
+      const error = res.locals['error'] as Error | undefined
       const logData: LogData = {
         req,
         res: {
@@ -79,9 +79,9 @@ export class ResponseInterceptor implements NestInterceptor {
       }
 
       if (!isIgnoreLogging) {
-        if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        if (status >= (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
           this.loggerService.err(message, logData)
-        } else if (status >= HttpStatus.BAD_REQUEST) {
+        } else if (status >= (HttpStatus.BAD_REQUEST as number)) {
           this.loggerService.warn(message, logData)
         } else {
           this.loggerService.info(message, logData)
@@ -92,7 +92,7 @@ export class ResponseInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      map((body) => {
+      map((body: unknown) => {
         if (isIgnoreResponse) {
           return body
         }

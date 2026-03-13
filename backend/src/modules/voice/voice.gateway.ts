@@ -45,7 +45,7 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // JWT is optional: family members have it, seniors don't
     if (token) {
       try {
-        const payload = this.jwtService.verify(token)
+        const payload = this.jwtService.verify<{ sub: number }>(token)
         ;(client as unknown as { userId: number }).userId = payload.sub
         this.logger.debug('Client connected (authenticated)')
       } catch {
@@ -126,9 +126,11 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
       )
 
       // Wire silence timeout to auto-end conversation
-      this.voiceService.setSilenceCallback(client, async () => {
-        await this.endConversation(client)
-        this.voiceService.endSession(client)
+      this.voiceService.setSilenceCallback(client, () => {
+        void (async () => {
+          await this.endConversation(client)
+          this.voiceService.endSession(client)
+        })()
       })
 
       // Create conversation record

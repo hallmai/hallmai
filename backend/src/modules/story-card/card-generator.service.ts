@@ -135,21 +135,24 @@ export class CardGeneratorService {
       const text = response.text
       if (!text) return null
 
-      const parsed = JSON.parse(text) as Record<string, unknown>
+      const parsed = JSON.parse(text) as {
+        topic?: string
+        quote?: string
+        vibe?: string
+      }
 
       // Validate required fields
       if (!parsed.topic || !parsed.quote || !parsed.vibe) return null
 
       // Validate vibe value
       const validVibes: Vibe[] = ['warm', 'calm', 'quiet']
-      const vibe = String(parsed.vibe)
-      const resolvedVibe: Vibe = validVibes.includes(vibe as Vibe)
-        ? (vibe as Vibe)
+      const resolvedVibe: Vibe = validVibes.includes(parsed.vibe as Vibe)
+        ? (parsed.vibe as Vibe)
         : 'calm'
 
       return {
-        topic: String(parsed.topic),
-        quote: String(parsed.quote),
+        topic: parsed.topic,
+        quote: parsed.quote,
         vibe: resolvedVibe
       }
     } catch (err) {
