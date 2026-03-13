@@ -20,6 +20,7 @@
 | F-35 | GeminiProvider 전역화 | 3개 모듈 중복 등록 → @Global() GeminiModule 통합 |
 | F-36 | Prompt Injection 방어 | 카드 생성기에 transcript 격리 태그 및 지시문 무시 경고 추가 |
 | F-37 | Soul 성숙도 기반 프롬프트 | explore/bonding/friend 3단계 시스템 프롬프트 분화 |
+| F-39 | 음성 볼륨 버튼 맥동 | listening/speaking 중 마이크 RMS 볼륨 기반 버튼 scale 맥동 + 노이즈 게이트 |
 
 ## Backlog — Ready (18)
 
@@ -44,7 +45,6 @@
 | F-28 | 설정 UI 버전 노출 | 설정 화면에서 프론트엔드·백엔드 버전 표시 | — |
 | F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API | — |
 | F-38 | 설정 디바이스 UUID 노출 | 시니어(게스트) 설정 화면에 디바이스 UUID 표시 | — |
-| F-39 | 음성 볼륨 버튼 맥동 | 통화 중 실시간 오디오 볼륨에 따라 중앙 버튼 크기 맥동 | — |
 
 ## Backlog — Blocked (4)
 
