@@ -108,3 +108,4 @@ export const AUDIO_CONFIG = {
 
 export const SILENCE_WARNING_MS = 30_000 // 30초 → 프론트에 경고
 export const SILENCE_TIMEOUT_MS = 45_000 // 45초 무음 → AI 작별
+export const SILENCE_GRACE_MS = 8_000 // AI 작별 인사 후 세션 종료 대기

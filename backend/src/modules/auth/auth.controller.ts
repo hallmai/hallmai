@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { AuthService, JwtPayload } from './auth.service'
 import { CurrentUser } from './current-user.decorator'
 import { GoogleLoginDto } from './dto/google-login.dto'
@@ -11,16 +12,19 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('google')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   async googleLogin(@Body() dto: GoogleLoginDto) {
     return this.authService.googleLogin(dto.code)
   }
 
   @Post('google/register')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   async register(@Body() dto: GoogleRegisterDto) {
-    return this.authService.register(dto.idToken, dto.marketingAgreed)
+    return this.authService.register(dto.registrationToken, dto.marketingAgreed)
   }
 
   @Post('refresh')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   async refresh(@Body() dto: RefreshDto) {
     return this.authService.refresh(dto.refreshToken)
   }

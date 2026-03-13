@@ -12,8 +12,8 @@ export async function apiGoogleLogin(code: string) {
   if (!res.ok) {
     const errorCode = data?.data?.errorCode || data?.errorCode;
     if (errorCode === "USER_NOT_REGISTERED") {
-      const idToken = data?.data?.idToken || data?.idToken;
-      return { registered: false as const, idToken };
+      const registrationToken = data?.data?.registrationToken || data?.registrationToken;
+      return { registered: false as const, registrationToken };
     }
     throw new Error(data?.message || "Login failed");
   }
@@ -21,11 +21,11 @@ export async function apiGoogleLogin(code: string) {
   return { registered: true as const, ...data.data };
 }
 
-export async function apiGoogleRegister(idToken: string, marketingAgreed: boolean) {
+export async function apiGoogleRegister(registrationToken: string, marketingAgreed: boolean) {
   const res = await fetch(`${API_URL}/api/auth/google/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken, marketingAgreed }),
+    body: JSON.stringify({ registrationToken, marketingAgreed }),
   });
 
   if (!res.ok) {

@@ -14,6 +14,7 @@ import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import {
   AUDIO_CONFIG,
   type RecentSummary,
+  SILENCE_GRACE_MS,
   SILENCE_TIMEOUT_MS,
   SILENCE_WARNING_MS,
   buildSystemPrompt
@@ -34,6 +35,18 @@ interface VoiceSession {
   silenceTimer: ReturnType<typeof setTimeout> | null
   silenceGraceTimer: ReturnType<typeof setTimeout> | null
   onSilenceTimeout: (() => void) | null
+}
+
+interface ToolCallPayload {
+  functionCalls?: Array<{
+    id: string
+    name: string
+    args: Record<string, unknown>
+  }>
+}
+
+interface ToolCallCancellationPayload {
+  ids?: string[]
 }
 
 @Injectable()
@@ -92,252 +105,21 @@ export class VoiceService {
         onmessage: (msg) => {
           if (client.readyState !== 1) return
 
-          // Server content with model turn
           if (msg.serverContent) {
-            const sc = msg.serverContent as Record<string, unknown>
-
-            // Interrupted
-            if (sc.interrupted) {
-              this.send(client, 'interrupted', {})
-            }
-
-            // Input transcription (user speech → text)
-            const inputTranscription = sc.inputTranscription as
-              | { text?: string }
-              | undefined
-            if (inputTranscription?.text) {
-              this.resetSilenceTimer(client)
-              const voiceSession = this.sessions.get(client)
-              if (voiceSession) {
-                if (
-                  voiceSession.lastSpeaker === 'user' &&
-                  voiceSession.transcript.length > 0
-                ) {
-                  const last =
-                    voiceSession.transcript[voiceSession.transcript.length - 1]
-                  last.text += inputTranscription.text
-                } else {
-                  voiceSession.transcript.push({
-                    role: 'user',
-                    text: inputTranscription.text
-                  })
-                  voiceSession.lastSpeaker = 'user'
-                }
-              }
-            }
-
-            // Output transcription (AI speech → text)
-            const outputTranscription = sc.outputTranscription as
-              | { text?: string }
-              | undefined
-            if (outputTranscription?.text) {
-              const voiceSession = this.sessions.get(client)
-              if (voiceSession) {
-                if (
-                  voiceSession.lastSpeaker === 'ai' &&
-                  voiceSession.transcript.length > 0
-                ) {
-                  const last =
-                    voiceSession.transcript[voiceSession.transcript.length - 1]
-                  last.text += outputTranscription.text
-                } else {
-                  voiceSession.transcript.push({
-                    role: 'ai',
-                    text: outputTranscription.text
-                  })
-                  voiceSession.lastSpeaker = 'ai'
-                }
-              }
-            }
-
-            // Audio parts in model turn
-            if (sc.modelTurn) {
-              const modelTurn = sc.modelTurn as {
-                parts?: Array<Record<string, unknown>>
-              }
-              for (const part of modelTurn.parts || []) {
-                if (part.inlineData) {
-                  const inlineData = part.inlineData as { data: string }
-                  this.send(client, 'audio', { data: inlineData.data })
-                }
-                // Collect AI thinking/reasoning text
-                if (part.text && typeof part.text === 'string') {
-                  const voiceSession = this.sessions.get(client)
-                  if (voiceSession) {
-                    voiceSession.currentThinking += part.text
-                  }
-                }
-              }
-            }
-
-            // Turn complete
-            if (sc.turnComplete) {
-              const voiceSession = this.sessions.get(client)
-              if (voiceSession && voiceSession.currentThinking) {
-                // Attach accumulated thinking to the last AI entry
-                const lastAi = [...voiceSession.transcript]
-                  .reverse()
-                  .find((e) => e.role === 'ai')
-                if (lastAi) {
-                  lastAi.thinking = voiceSession.currentThinking
-                }
-                voiceSession.currentThinking = ''
-              }
-              if (voiceSession) {
-                voiceSession.lastSpeaker = null
-              }
-              this.send(client, 'turn_complete', {})
-              this.resetSilenceTimer(client)
-            }
+            this.handleServerContent(client, msg.serverContent)
           }
 
-          // Tool call from Gemini (custom function calls)
-          const toolCall = (msg as Record<string, unknown>).toolCall as
-            | {
-                functionCalls?: Array<{
-                  id: string
-                  name: string
-                  args: Record<string, unknown>
-                }>
-              }
-            | undefined
+          const toolCall = (msg as unknown as Record<string, unknown>)
+            .toolCall as ToolCallPayload | undefined
           if (toolCall?.functionCalls) {
-            const voiceSession = this.sessions.get(client)
-            if (voiceSession) {
-              for (const fc of toolCall.functionCalls) {
-                voiceSession.transcript.push({
-                  role: 'tool',
-                  text: '',
-                  toolName: fc.name,
-                  toolCallId: fc.id,
-                  toolArgs: fc.args,
-                  toolStatus: 'pending'
-                })
-                voiceSession.pendingToolCalls.add(fc.id)
-                this.send(client, 'tool_activity', {
-                  status: 'pending',
-                  toolName: fc.name,
-                  toolCallId: fc.id
-                })
-
-                const handler = this.toolHandlers.get(fc.name)
-                if (handler) {
-                  handler(fc.args)
-                    .then((result) => {
-                      if (!voiceSession.pendingToolCalls.has(fc.id)) return
-                      const entry = voiceSession.transcript.find(
-                        (e) => e.toolCallId === fc.id
-                      )
-                      if (entry) {
-                        entry.toolResult = result
-                        entry.toolStatus = 'completed'
-                      }
-                      voiceSession.pendingToolCalls.delete(fc.id)
-
-                      try {
-                        voiceSession.geminiSession.sendToolResponse({
-                          functionResponses: [
-                            { name: fc.name, id: fc.id, response: result }
-                          ]
-                        })
-                      } catch (e) {
-                        this.logger.warn(
-                          `Failed to send tool response (session closed): ${String(e)}`
-                        )
-                      }
-
-                      this.send(client, 'tool_activity', {
-                        status: 'completed',
-                        toolName: fc.name,
-                        toolCallId: fc.id
-                      })
-                    })
-                    .catch((err) => {
-                      if (!voiceSession.pendingToolCalls.has(fc.id)) return
-                      this.logger.error(
-                        `Tool handler error for ${fc.name}: ${String(err)}`
-                      )
-                      const entry = voiceSession.transcript.find(
-                        (e) => e.toolCallId === fc.id
-                      )
-                      if (entry) {
-                        entry.toolStatus = 'error'
-                        entry.toolResult = { error: String(err) }
-                      }
-                      voiceSession.pendingToolCalls.delete(fc.id)
-
-                      try {
-                        voiceSession.geminiSession.sendToolResponse({
-                          functionResponses: [
-                            {
-                              name: fc.name,
-                              id: fc.id,
-                              response: { error: String(err) }
-                            }
-                          ]
-                        })
-                      } catch (e) {
-                        this.logger.warn(
-                          `Failed to send tool error response (session closed): ${String(e)}`
-                        )
-                      }
-
-                      this.send(client, 'tool_activity', {
-                        status: 'error',
-                        toolName: fc.name,
-                        toolCallId: fc.id
-                      })
-                    })
-                } else {
-                  this.logger.warn(`No handler registered for tool: ${fc.name}`)
-                  const entry = voiceSession.transcript.find(
-                    (e) => e.toolCallId === fc.id
-                  )
-                  if (entry) {
-                    entry.toolStatus = 'error'
-                    entry.toolResult = { error: 'No handler registered' }
-                  }
-                  voiceSession.pendingToolCalls.delete(fc.id)
-                  try {
-                    voiceSession.geminiSession.sendToolResponse({
-                      functionResponses: [
-                        {
-                          name: fc.name,
-                          id: fc.id,
-                          response: { error: 'Unknown tool' }
-                        }
-                      ]
-                    })
-                  } catch (e) {
-                    this.logger.warn(
-                      `Failed to send unknown tool response: ${String(e)}`
-                    )
-                  }
-                }
-              }
-            }
+            this.handleToolCalls(client, toolCall)
           }
 
-          // Tool call cancellation
-          const toolCallCancellation = (msg as Record<string, unknown>)
-            .toolCallCancellation as { ids?: string[] } | undefined
+          const toolCallCancellation = (
+            msg as unknown as Record<string, unknown>
+          ).toolCallCancellation as ToolCallCancellationPayload | undefined
           if (toolCallCancellation?.ids) {
-            const voiceSession = this.sessions.get(client)
-            if (voiceSession) {
-              for (const id of toolCallCancellation.ids) {
-                const entry = voiceSession.transcript.find(
-                  (e) => e.toolCallId === id
-                )
-                if (entry) {
-                  entry.toolStatus = 'cancelled'
-                }
-                voiceSession.pendingToolCalls.delete(id)
-                this.send(client, 'tool_activity', {
-                  status: 'cancelled',
-                  toolCallId: id
-                })
-              }
-            }
+            this.handleToolCancellation(client, toolCallCancellation)
           }
         },
         onerror: (err: ErrorEvent) => {
@@ -453,8 +235,228 @@ export class VoiceService {
             this.logger.error(`Silence timeout handler error: ${String(err)}`)
           )
         }
-      }, 8000)
+      }, SILENCE_GRACE_MS)
     }, SILENCE_TIMEOUT_MS)
+  }
+
+  private handleServerContent(client: WebSocket, serverContent: unknown): void {
+    const sc = serverContent as Record<string, unknown>
+
+    // Interrupted
+    if (sc.interrupted) {
+      this.send(client, 'interrupted', {})
+    }
+
+    // Input transcription (user speech → text)
+    const inputTranscription = sc.inputTranscription as
+      | { text?: string }
+      | undefined
+    if (inputTranscription?.text) {
+      this.resetSilenceTimer(client)
+      const voiceSession = this.sessions.get(client)
+      if (voiceSession) {
+        if (
+          voiceSession.lastSpeaker === 'user' &&
+          voiceSession.transcript.length > 0
+        ) {
+          const last =
+            voiceSession.transcript[voiceSession.transcript.length - 1]
+          last.text += inputTranscription.text
+        } else {
+          voiceSession.transcript.push({
+            role: 'user',
+            text: inputTranscription.text
+          })
+          voiceSession.lastSpeaker = 'user'
+        }
+      }
+    }
+
+    // Output transcription (AI speech → text)
+    const outputTranscription = sc.outputTranscription as
+      | { text?: string }
+      | undefined
+    if (outputTranscription?.text) {
+      const voiceSession = this.sessions.get(client)
+      if (voiceSession) {
+        if (
+          voiceSession.lastSpeaker === 'ai' &&
+          voiceSession.transcript.length > 0
+        ) {
+          const last =
+            voiceSession.transcript[voiceSession.transcript.length - 1]
+          last.text += outputTranscription.text
+        } else {
+          voiceSession.transcript.push({
+            role: 'ai',
+            text: outputTranscription.text
+          })
+          voiceSession.lastSpeaker = 'ai'
+        }
+      }
+    }
+
+    // Audio parts in model turn
+    if (sc.modelTurn) {
+      const modelTurn = sc.modelTurn as {
+        parts?: Array<Record<string, unknown>>
+      }
+      for (const part of modelTurn.parts || []) {
+        if (part.inlineData) {
+          const inlineData = part.inlineData as { data: string }
+          this.send(client, 'audio', { data: inlineData.data })
+        }
+        // Collect AI thinking/reasoning text
+        if (part.text && typeof part.text === 'string') {
+          const voiceSession = this.sessions.get(client)
+          if (voiceSession) {
+            voiceSession.currentThinking += part.text
+          }
+        }
+      }
+    }
+
+    // Turn complete
+    if (sc.turnComplete) {
+      const voiceSession = this.sessions.get(client)
+      if (voiceSession && voiceSession.currentThinking) {
+        // Attach accumulated thinking to the last AI entry
+        const lastAi = [...voiceSession.transcript]
+          .reverse()
+          .find((e) => e.role === 'ai')
+        if (lastAi) {
+          lastAi.thinking = voiceSession.currentThinking
+        }
+        voiceSession.currentThinking = ''
+      }
+      if (voiceSession) {
+        voiceSession.lastSpeaker = null
+      }
+      this.send(client, 'turn_complete', {})
+      this.resetSilenceTimer(client)
+    }
+  }
+
+  private handleToolCalls(client: WebSocket, toolCall: ToolCallPayload): void {
+    const voiceSession = this.sessions.get(client)
+    if (!voiceSession) return
+
+    for (const fc of toolCall.functionCalls!) {
+      voiceSession.transcript.push({
+        role: 'tool',
+        text: '',
+        toolName: fc.name,
+        toolCallId: fc.id,
+        toolArgs: fc.args,
+        toolStatus: 'pending'
+      })
+      voiceSession.pendingToolCalls.add(fc.id)
+      this.send(client, 'tool_activity', {
+        status: 'pending',
+        toolName: fc.name,
+        toolCallId: fc.id
+      })
+
+      const handler = this.toolHandlers.get(fc.name)
+      if (handler) {
+        handler(fc.args)
+          .then((result) => {
+            if (!voiceSession.pendingToolCalls.has(fc.id)) return
+            const entry = voiceSession.transcript.find(
+              (e) => e.toolCallId === fc.id
+            )
+            if (entry) {
+              entry.toolResult = result
+              entry.toolStatus = 'completed'
+            }
+            voiceSession.pendingToolCalls.delete(fc.id)
+
+            this.trySendToolResponse(voiceSession.geminiSession, [
+              { name: fc.name, id: fc.id, response: result }
+            ])
+
+            this.send(client, 'tool_activity', {
+              status: 'completed',
+              toolName: fc.name,
+              toolCallId: fc.id
+            })
+          })
+          .catch((err) => {
+            if (!voiceSession.pendingToolCalls.has(fc.id)) return
+            this.logger.error(
+              `Tool handler error for ${fc.name}: ${String(err)}`
+            )
+            const entry = voiceSession.transcript.find(
+              (e) => e.toolCallId === fc.id
+            )
+            if (entry) {
+              entry.toolStatus = 'error'
+              entry.toolResult = { error: String(err) }
+            }
+            voiceSession.pendingToolCalls.delete(fc.id)
+
+            this.trySendToolResponse(voiceSession.geminiSession, [
+              { name: fc.name, id: fc.id, response: { error: String(err) } }
+            ])
+
+            this.send(client, 'tool_activity', {
+              status: 'error',
+              toolName: fc.name,
+              toolCallId: fc.id
+            })
+          })
+      } else {
+        this.logger.warn(`No handler registered for tool: ${fc.name}`)
+        const entry = voiceSession.transcript.find(
+          (e) => e.toolCallId === fc.id
+        )
+        if (entry) {
+          entry.toolStatus = 'error'
+          entry.toolResult = { error: 'No handler registered' }
+        }
+        voiceSession.pendingToolCalls.delete(fc.id)
+        this.trySendToolResponse(voiceSession.geminiSession, [
+          { name: fc.name, id: fc.id, response: { error: 'Unknown tool' } }
+        ])
+      }
+    }
+  }
+
+  private handleToolCancellation(
+    client: WebSocket,
+    toolCallCancellation: ToolCallCancellationPayload
+  ): void {
+    const voiceSession = this.sessions.get(client)
+    if (!voiceSession) return
+
+    for (const id of toolCallCancellation.ids!) {
+      const entry = voiceSession.transcript.find((e) => e.toolCallId === id)
+      if (entry) {
+        entry.toolStatus = 'cancelled'
+      }
+      voiceSession.pendingToolCalls.delete(id)
+      this.send(client, 'tool_activity', {
+        status: 'cancelled',
+        toolCallId: id
+      })
+    }
+  }
+
+  private trySendToolResponse(
+    session: Session,
+    functionResponses: Array<{
+      name: string
+      id: string
+      response: Record<string, unknown>
+    }>
+  ): void {
+    try {
+      session.sendToolResponse({ functionResponses })
+    } catch (e) {
+      this.logger.warn(
+        `Failed to send tool response (session closed): ${String(e)}`
+      )
+    }
   }
 
   private clearSilenceTimers(session: VoiceSession): void {

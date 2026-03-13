@@ -29,7 +29,7 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
-    return sessionStorage.getItem("pendingGoogleIdToken");
+    return sessionStorage.getItem("pendingRegistrationToken");
   });
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function RegisterPage() {
     try {
       const result = await apiGoogleRegister(pendingToken, !!checked["marketing"]);
       saveAuth(result);
-      sessionStorage.removeItem("pendingGoogleIdToken");
+      sessionStorage.removeItem("pendingRegistrationToken");
       router.replace("/stories");
     } catch {
       setIsSubmitting(false);

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator'
 import { JwtPayload } from '../auth/auth.service'
 import { CurrentUser } from '../auth/current-user.decorator'
@@ -27,6 +28,7 @@ export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Post('register')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   async register(@Body() dto: RegisterDeviceDto) {
     return this.deviceService.register(dto.deviceUuid)
   }
@@ -38,6 +40,7 @@ export class DeviceController {
   }
 
   @Get('status/:code')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   async status(@Param('code') code: string) {
     return this.deviceService.getStatus(code)
   }

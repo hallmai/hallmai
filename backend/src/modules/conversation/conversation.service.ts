@@ -45,7 +45,7 @@ export class ConversationService {
     await this.conversationRepository.update(id, {
       endedAt: now,
       durationSeconds,
-      transcript: transcript || null
+      transcript: (transcript || null) as any
     })
   }
 
