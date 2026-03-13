@@ -71,10 +71,10 @@ export default function CallPage() {
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center">
-      {/* Link code indicator (senior mode, top-right) */}
-      {showLinkCode && (
+      {/* Senior mode status indicator (top-right) */}
+      {!isLoggedIn && !loading && (
         <span className="absolute top-5 right-5 text-[14px] font-mono font-bold text-stone-400 tracking-[0.15em]">
-          {linkCode}
+          {linked ? t.linkedFamily : linkCode}
         </span>
       )}
 

@@ -32,7 +32,7 @@
 | F-29 | Soul 엔진 | 대화 종료 시 transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트. 다음 대화 시스템 프롬프트에 주입 | done |
 | F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색. F-03 흡수. 최신 모델(`gemini-live-2.5-flash-native-audio`)에서 지원 확인 | done |
 | F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API로 대화 중 유튜브 검색 | backlog |
-| F-32 | 시니어 친화 VAD 설정 | Gemini Live API VAD 민감도를 고령자 음성 특성에 맞춰 조정. startOfSpeech/endOfSpeech LOW, prefixPadding 400ms, silenceDuration 2000ms | done |
+| F-32 | 시니어 친화 VAD 설정 | Gemini Live API VAD 민감도를 고령자 음성 특성에 맞춰 조정. startOfSpeech HIGH, endOfSpeech LOW, prefixPadding 800ms, silenceDuration 2000ms | done |
 | F-33 | 구조화 로깅 (Cloud Run) | NestJS 전체 로그를 Winston JSON 포맷으로 통합. NestLoggerAdapter, bufferLogs, AllExceptionsFilter console.error 제거 | done |
 | F-34 | Gemini JSON 모드 전환 | Soul 엔진·카드 생성기의 regex 기반 JSON 파싱을 responseMimeType: 'application/json'으로 교체 | done |
 | F-35 | GeminiProvider 전역화 | 3개 모듈에서 중복 등록된 GeminiProvider를 @Global() GeminiModule로 통합 | done |

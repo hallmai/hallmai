@@ -62,6 +62,7 @@ const dictionaries = {
     callError: "Couldn't connect",
     callErrorRetry: "Touch to try again",
     callSilenceWarning: "Are you still there?",
+    linkedFamily: "Connected with family",
   },
   ko: {
     brand: "\uD560\uB9C8\uC774",
@@ -120,6 +121,7 @@ const dictionaries = {
     callError: "\uC5F0\uACB0\uC774 \uC548 \uB410\uC5B4\uC694",
     callErrorRetry: "\uB2E4\uC2DC \uD130\uCE58\uD574 \uC8FC\uC138\uC694",
     callSilenceWarning: "\uAC70\uAE30 \uACC4\uC138\uC694?",
+    linkedFamily: "\uAC00\uC871\uACFC \uC5F0\uACB0\uB428",
   },
 } satisfies Record<string, Record<string, string>>;
 
