@@ -81,6 +81,7 @@
 ### 배포
 - 앱: GitHub Actions (main push 시 자동)
 - 인프라: Terraform 수동 (`cd infra && terraform apply`), main 직접 커밋
+- **main push 전 반드시 로컬 빌드 검증**: `cd backend && yarn build` + `cd frontend && yarn build`
 
 ### 기타
 - worktree 작업: WorktreeCreate hook이 backend/.env를 자동 복사함
