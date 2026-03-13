@@ -109,15 +109,15 @@ export class VoiceService {
             this.handleServerContent(client, msg.serverContent)
           }
 
-          const toolCall = (msg as Record<string, unknown>).toolCall as
-            | ToolCallPayload
-            | undefined
+          const toolCall = (msg as unknown as Record<string, unknown>)
+            .toolCall as ToolCallPayload | undefined
           if (toolCall?.functionCalls) {
             this.handleToolCalls(client, toolCall)
           }
 
-          const toolCallCancellation = (msg as Record<string, unknown>)
-            .toolCallCancellation as ToolCallCancellationPayload | undefined
+          const toolCallCancellation = (
+            msg as unknown as Record<string, unknown>
+          ).toolCallCancellation as ToolCallCancellationPayload | undefined
           if (toolCallCancellation?.ids) {
             this.handleToolCancellation(client, toolCallCancellation)
           }

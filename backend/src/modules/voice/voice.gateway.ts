@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -24,6 +25,7 @@ interface ClientSession {
   deviceId: number
 }
 
+@SkipThrottle()
 @WebSocketGateway({ path: '/ws/voice' })
 export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(VoiceGateway.name)
