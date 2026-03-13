@@ -29,10 +29,14 @@ export class AudioRecorder {
 
     this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
       const float32 = event.data
+      const level = rms(float32)
       if (this.onVolume) {
-        this.onVolume(rms(float32))
+        this.onVolume(level)
       }
-      const int16 = float32ToInt16(float32)
+      // Noise gate: send silence when below threshold
+      const int16 = level < NOISE_GATE
+        ? new Int16Array(float32.length)
+        : float32ToInt16(float32)
       const base64 = arrayBufferToBase64(int16.buffer as ArrayBuffer)
       this.onData?.(base64)
     }
@@ -52,6 +56,8 @@ export class AudioRecorder {
     this.onVolume = null
   }
 }
+
+const NOISE_GATE = 0.05
 
 function rms(buf: Float32Array): number {
   let sum = 0

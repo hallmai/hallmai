@@ -33,7 +33,7 @@ export default function CallPage() {
   }, [volumeRef]);
 
   useEffect(() => {
-    if (state === "listening") {
+    if (state === "listening" || state === "speaking") {
       rafRef.current = requestAnimationFrame(animateVolume);
     } else {
       cancelAnimationFrame(rafRef.current);
@@ -142,7 +142,7 @@ export default function CallPage() {
           className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-[background-color] duration-300 disabled:opacity-50"
           style={{
             backgroundColor: buttonColor,
-            transform: state === "speaking" ? "scale(1.08)" : "scale(1)",
+            transform: isActive ? undefined : "scale(1)",
           }}
         >
           {isError && (
