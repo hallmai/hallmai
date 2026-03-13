@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { InjectRepository } from '@nestjs/typeorm'
 import { SkipThrottle } from '@nestjs/throttler'
+import { InjectRepository } from '@nestjs/typeorm'
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,

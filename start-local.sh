@@ -35,8 +35,15 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-# 1. Start PostgreSQL (wait for healthcheck)
+# 1. Start PostgreSQL (free port 5432, clean up orphans, wait for healthcheck)
 echo "Starting PostgreSQL..."
+docker compose down --remove-orphans 2>/dev/null || true
+# Stop any other container using port 5432
+OTHER_PG=$(docker ps --filter "publish=5432" -q 2>/dev/null)
+if [ -n "$OTHER_PG" ]; then
+  echo "Stopping other container on port 5432..."
+  docker stop $OTHER_PG 2>/dev/null || true
+fi
 docker compose up -d --wait
 echo "PostgreSQL is ready."
 
