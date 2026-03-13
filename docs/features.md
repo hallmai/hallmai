@@ -4,7 +4,7 @@
 |---|---|---|---|
 | F-01 | AI 선제 대화 시작 | 매일 정해진 시간에 AI가 먼저 시니어에게 말을 걸어 대화 시작 | backlog |
 | F-02 | 지난 대화 기억 | 대화 종료 시 요약 자동 생성, 다음 대화 시스템 프롬프트에 최근 3회 요약 주입 | done |
-| F-03 | AI 질문 풀 — 오늘 기반 | F-30 구글 검색으로 흡수 예정이었으나 Live API 미지원. 별도 구현 필요 | backlog |
+| F-03 | AI 질문 풀 — 오늘 기반 | F-30 구글 검색으로 흡수. Live API 최신 모델에서 tools 지원 확인 | done |
 | F-04 | AI 질문 풀 — 개인 기반 | Soul 프로필의 관심사/취미가 시스템 프롬프트에 주입되어 대화 주제로 활용 | done |
 | F-05 | AI 질문 풀 — 관계 기반 | Soul에서 자동 추출된 가족 관계 정보를 바탕으로 가족 얘기를 자연스럽게 꺼내는 대화 주제 생성 | backlog |
 | F-06 | 대화 종료 트리거 개선 | 침묵 감지 자동 종료, AI 판단 종료 등 다양한 종료 방식 지원 | backlog |
@@ -31,7 +31,7 @@
 | F-27 | 음성 통화 시뮬레이터 | 마이크 없이 텍스트로 음성 통화를 테스트할 수 있는 개발 도구 | backlog |
 | F-28 | 설정 UI 버전 노출 | 설정 화면에서 프론트엔드·백엔드 각각의 버전을 표시 | backlog |
 | F-29 | Soul 엔진 | 대화 종료 시 transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트. 다음 대화 시스템 프롬프트에 주입 | done |
-| F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색. F-03 흡수. ⚠️ Live API 오디오 모드에서 tools 미지원 확인, 대안 필요 | backlog |
+| F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색. F-03 흡수. 최신 모델(`gemini-live-2.5-flash-native-audio`)에서 지원 확인 | done |
 | F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API로 대화 중 유튜브 검색 | backlog |
 | F-32 | 시니어 친화 VAD 설정 | Gemini Live API VAD 민감도를 고령자 음성 특성에 맞춰 조정. startOfSpeech/endOfSpeech LOW, prefixPadding 400ms, silenceDuration 2000ms | done |
 | F-33 | 구조화 로깅 (Cloud Run) | NestJS 전체 로그를 Winston JSON 포맷으로 통합. NestLoggerAdapter, bufferLogs, AllExceptionsFilter console.error 제거 | done |
@@ -45,7 +45,7 @@
 |------|----------|------|
 | F-01 | — | v1은 독립, F-04/F-05 있으면 맥락적 인사 가능 |
 | F-02 | F-24 ✅, F-29 ✅ | ✅ done. 대화 요약 생성 + 시스템 프롬프트 주입 |
-| F-03 | F-30 | backlog. F-30 구글 검색으로 흡수 예정이었으나 Live API 미지원 |
+| F-03 | F-30 ✅ | ✅ done. F-30 구글 검색으로 흡수 |
 | F-04 | F-29 ✅ | ✅ done. Soul 프로필 관심사 → 시스템 프롬프트 |
 | F-05 | F-29 | Soul 엔진에서 자동 추출된 가족 관계 필요 |
 | F-06 | F-22 ✅ | 침묵 감지 위에 AI 판단 종료 추가 |
@@ -72,7 +72,7 @@
 | F-27 | — | 개발 도구, 독립 |
 | F-28 | — | health API에 version 추가 + 설정 UI |
 | F-29 | F-24 ✅ | **핵심 블로커**: F-02, F-04, F-05 해제. transcript 기반 Soul 프로필 추출 |
-| F-30 | — | backlog. Live API 오디오 모드에서 tools 미지원 확인, 대안 필요 |
+| F-30 | — | ✅ done. 최신 모델에서 tools 지원 확인, googleSearch 재적용 |
 | F-31 | — | 독립, YouTube Data API 키 필요 |
 | F-32 | — | ✅ done. 고령자 음성 연구 기반 값 설정 |
 | F-33 | — | ✅ done |

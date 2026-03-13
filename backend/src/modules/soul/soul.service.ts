@@ -10,7 +10,11 @@ import {
   type SoulProfile
 } from '../../common/entity/device-soul.entity'
 import { GEMINI_CLIENT } from '../../common/gemini.provider'
-import { formatTranscript, getTextModel, wrapTranscript } from '../../common/gemini.util'
+import {
+  formatTranscript,
+  getTextModel,
+  wrapTranscript
+} from '../../common/gemini.util'
 
 const SOUL_PROMPT = `당신은 AI 말동무 '할마이'의 기억 관리자입니다.
 대화 기록을 분석하여 이 시니어에 대한 프로필을 업데이트합니다.

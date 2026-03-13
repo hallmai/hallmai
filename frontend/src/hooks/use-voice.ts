@@ -19,6 +19,9 @@ export function useVoice(deviceUuid: string | null) {
         if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
         errorTimerRef.current = setTimeout(() => setError(null), 3000)
       },
+      onToolActivity: (data) => {
+        console.debug('[voice] tool_activity', data)
+      },
       onSilenceWarning: () => {
         setSilenceWarning(true)
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)

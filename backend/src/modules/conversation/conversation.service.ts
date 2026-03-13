@@ -8,7 +8,11 @@ import {
   type TranscriptEntry
 } from '../../common/entity/conversation.entity'
 import { GEMINI_CLIENT } from '../../common/gemini.provider'
-import { formatTranscript, getTextModel, wrapTranscript } from '../../common/gemini.util'
+import {
+  formatTranscript,
+  getTextModel,
+  wrapTranscript
+} from '../../common/gemini.util'
 
 @Injectable()
 export class ConversationService {

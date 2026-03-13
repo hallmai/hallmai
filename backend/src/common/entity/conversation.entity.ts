@@ -3,9 +3,14 @@ import { BaseEntity } from './base.entity'
 import { Device } from './device.entity'
 
 export interface TranscriptEntry {
-  role: 'user' | 'ai'
+  role: 'user' | 'ai' | 'tool'
   text: string
   thinking?: string
+  toolName?: string
+  toolCallId?: string
+  toolArgs?: Record<string, unknown>
+  toolResult?: Record<string, unknown>
+  toolStatus?: 'pending' | 'completed' | 'cancelled' | 'error'
 }
 
 @Entity('conversations')

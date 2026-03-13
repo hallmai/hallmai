@@ -14,6 +14,7 @@ export type VoiceEventHandler = {
   onStateChange: (state: VoiceState) => void
   onError: (message: string) => void
   onSilenceWarning?: () => void
+  onToolActivity?: (data: Record<string, unknown>) => void
 }
 
 export class VoiceClient {
@@ -109,6 +110,9 @@ export class VoiceClient {
       case 'ended':
         this.cleanup()
         this.setState('idle')
+        break
+      case 'tool_activity':
+        this.handler.onToolActivity?.(msg.data || {})
         break
       case 'silence_warning':
         this.handler.onSilenceWarning?.()
