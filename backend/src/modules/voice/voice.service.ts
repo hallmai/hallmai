@@ -78,7 +78,6 @@ export class VoiceService {
         responseModalities: [Modality.AUDIO],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
-        tools: [{ googleSearch: {} }],
         systemInstruction: {
           parts: [
             {
