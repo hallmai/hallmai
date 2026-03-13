@@ -24,7 +24,7 @@
 | F-20 | 시니어 오류 UX | 연결 실패·끊김·재연결 시 시니어 맞춤 피드백 (큰 글씨, 음성 안내) | done |
 | F-21 | 카드 필터링 강화 | 프롬프트 외 키워드 후처리 필터 + 민감 정보 탐지 2차 방어 | backlog |
 | F-22 | 침묵 감지 자동 종료 | 일정 시간 침묵 시 AI가 종료 안내 후 자동 대화 종료 | done |
-| F-23 | Capacitor 네이티브 빌드 | iOS TestFlight + Android APK 배포. Capacitor 8 기반 네이티브 래핑 | backlog |
+| F-23 | Capacitor 네이티브 빌드 | iOS/Android 네이티브 프로젝트 설정 완료. Capacitor 8 + safe area + StatusBar + 앱 아이콘. TestFlight/APK 배포는 별도 | done |
 | F-24 | 대화 transcript 정상 저장 | inputAudioTranscription/outputAudioTranscription으로 실제 대화 저장, thinking 별도 보존 | done |
 | F-25 | 디바이스 등록 중복 에러 개선 | 동시 register 요청 시 device_uuid duplicate key 에러 로그 제거, upsert 패턴 적용 | done |
 | F-26 | 실시간 대화 자막 | 통화 중 시니어 화면에 AI/사용자 대화를 실시간 자막으로 표시 | backlog |
@@ -65,7 +65,7 @@
 | F-20 | — | ✅ done |
 | F-21 | — | 후처리 필터 독립 구현 |
 | F-22 | — | ✅ done |
-| F-23 | — | **핵심 블로커**: F-17, F-18 해제 |
+| F-23 | — | ✅ done. **핵심 블로커 해제**: F-17, F-18 진행 가능 |
 | F-24 | — | ✅ done |
 | F-25 | — | ✅ done |
 | F-26 | F-24 ✅ | transcript 저장 인프라 위에 실시간 UI 추가 |
