@@ -394,6 +394,7 @@ export class VoiceService {
     const { deviceUuid, transcript } = session
 
     this.clearSilenceTimers(session)
+    session.pendingToolCalls.clear()
 
     try {
       session.geminiSession.close()

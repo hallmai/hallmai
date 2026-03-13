@@ -22,7 +22,10 @@ export function formatTranscript(
   transcript: TranscriptEntry[],
   maxChars: number = DEFAULT_MAX_CHARS
 ): string {
-  let text = transcript.map((e) => `${e.role}: ${e.text}`).join('\n')
+  let text = transcript
+    .filter((e) => e.role !== 'tool')
+    .map((e) => `${e.role}: ${e.text}`)
+    .join('\n')
 
   if (!text.trim()) return ''
 
