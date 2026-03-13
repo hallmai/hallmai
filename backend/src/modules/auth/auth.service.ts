@@ -43,15 +43,14 @@ export class AuthService {
 
   private async exchangeGoogleCode(
     code: string
-  ): Promise<{ profile: GoogleProfile; idToken: string }> {
+  ): Promise<{ profile: GoogleProfile }> {
     try {
       const { tokens } = await this.googleClient.getToken(code)
       if (!tokens.id_token) {
         throw new UnauthorizedException('Google did not return id_token')
       }
-      const idToken = tokens.id_token
-      const profile = await this.verifyGoogleIdToken(idToken)
-      return { profile, idToken }
+      const profile = await this.verifyGoogleIdToken(tokens.id_token)
+      return { profile }
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err
       if (err instanceof CustomHttpException) throw err
@@ -82,7 +81,7 @@ export class AuthService {
   }
 
   async googleLogin(code: string) {
-    const { profile, idToken } = await this.exchangeGoogleCode(code)
+    const { profile } = await this.exchangeGoogleCode(code)
 
     const authToken = await this.authTokenRepository.findOne({
       where: { providerType: 'google', providerUserId: profile.googleId },
@@ -90,11 +89,16 @@ export class AuthService {
     })
 
     if (!authToken) {
+      // Google idToken 대신 서버 자체 서명 registrationToken 발급 (PII 유출 방지)
+      const registrationToken = this.jwtService.sign(
+        { purpose: 'register', profile },
+        { expiresIn: '5m' }
+      )
       throw new CustomHttpException(
         HttpStatus.FORBIDDEN,
         ErrorCode.USER_NOT_REGISTERED,
         '가입되지 않은 회원입니다',
-        { idToken }
+        { registrationToken }
       )
     }
 
@@ -115,8 +119,15 @@ export class AuthService {
     return this.issueTokens(user, authToken)
   }
 
-  async register(idToken: string, marketingAgreed: boolean) {
-    const profile = await this.verifyGoogleIdToken(idToken)
+  async register(registrationToken: string, marketingAgreed: boolean) {
+    const payload = this.jwtService.verify<{
+      purpose: string
+      profile: GoogleProfile
+    }>(registrationToken)
+    if (payload.purpose !== 'register') {
+      throw new UnauthorizedException('Invalid registration token')
+    }
+    const profile = payload.profile
 
     // 이미 가입된 유저면 로그인 처리
     const existing = await this.authTokenRepository.findOne({

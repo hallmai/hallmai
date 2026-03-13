@@ -133,7 +133,7 @@ function GuestSettings({
         const result = await apiGoogleLogin(codeResponse.code);
 
         if (!result.registered) {
-          sessionStorage.setItem("pendingGoogleIdToken", result.idToken);
+          sessionStorage.setItem("pendingRegistrationToken", result.registrationToken);
           router.push("/auth/register");
           return;
         }
