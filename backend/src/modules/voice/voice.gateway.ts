@@ -131,8 +131,13 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Wire silence timeout to auto-end conversation
       this.voiceService.setSilenceCallback(client, () => {
         void (async () => {
-          await this.endConversation(client)
-          this.voiceService.endSession(client)
+          try {
+            await this.endConversation(client)
+          } catch (err) {
+            this.logger.error(`Silence end conversation error: ${String(err)}`)
+          } finally {
+            this.voiceService.endSession(client)
+          }
         })()
       })
 
