@@ -88,9 +88,14 @@ export class VoiceClient {
   private handleMessage(msg: WsMessage): void {
     switch (msg.event) {
       case 'ready':
-        this.startRecording()
         this.player = new AudioPlayer()
-        this.setState('speaking')
+        this.startRecording()
+          .then(() => this.setState('listening'))
+          .catch(() => {
+            this.handler.onError('Microphone access denied')
+            this.cleanup()
+            this.setState('idle')
+          })
         break
       case 'audio':
         if (msg.data?.data) {

@@ -28,7 +28,7 @@ export default function CallPage() {
     if (loading) return;
     if (state === "idle") {
       start();
-    } else if (state === "listening" || state === "speaking") {
+    } else if (state === "connecting" || state === "listening" || state === "speaking") {
       stop();
       setCycle((c) => c + 1);
     }
