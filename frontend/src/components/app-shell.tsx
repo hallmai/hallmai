@@ -9,7 +9,7 @@ export default function AppShell({
 }) {
   return (
     <div className="flex h-dvh justify-center bg-[#f2f1ef]">
-      <div className="relative flex w-full max-w-[430px] flex-col h-dvh bg-[#FFF8F0]">
+      <div className="relative flex w-full max-w-[430px] flex-col h-dvh bg-[#FFF8F0] pt-safe">
         {children}
       </div>
       <DownloadSidebar />

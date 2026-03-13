@@ -5,8 +5,33 @@ const config: CapacitorConfig = {
   appName: "hallmai",
   webDir: "out",
   server: {
-    url: process.env.CAPACITOR_SERVER_URL,
+    // TODO:
+    url: "http://192.168.50.245:3000",
     cleartext: true,
+    allowNavigation: ["*"],
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      androidScaleType: "FIT_XY",
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      style: "LIGHT",
+    },
+    Keyboard: {
+      resize: "native",
+    },
+  },
+  ios: {
+    contentInset: "never",
+    backgroundColor: "#FFF8F0",
+    zoomEnabled: false,
+  },
+  android: {
+    backgroundColor: "#FFF8F0",
   },
 };
 

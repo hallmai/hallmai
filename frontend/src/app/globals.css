@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tailwindcss-safe-area";
 
 @theme inline {
   --color-background: #FFF8F0;
