@@ -40,7 +40,7 @@ export default function FamilyTabs() {
   ];
 
   return (
-    <div className="absolute bottom-5 left-5 right-5 z-50">
+    <div className="absolute bottom-5 pb-safe left-5 right-5 z-50">
       <nav className="flex rounded-2xl bg-[#FFF8F0]/80 backdrop-blur-xl shadow-lg shadow-stone-900/[0.08] border border-stone-200/40">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;

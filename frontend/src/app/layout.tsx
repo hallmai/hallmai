@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Providers from "./providers";
+import DeviceProvider from "@/components/device-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,6 +17,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -26,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <DeviceProvider />
         <Providers>{children}</Providers>
       </body>
     </html>
