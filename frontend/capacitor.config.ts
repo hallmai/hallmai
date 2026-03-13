@@ -5,8 +5,7 @@ const config: CapacitorConfig = {
   appName: "hallmai",
   webDir: "out",
   server: {
-    // TODO:
-    url: "http://192.168.50.245:3000",
+    url: process.env.CAPACITOR_SERVER_URL,
     cleartext: true,
     allowNavigation: ["*"],
   },
