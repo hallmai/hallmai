@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
 import { ScheduleModule } from '@nestjs/schedule'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { EntityModule } from './common/entity/entity.module'
 import { GeminiModule } from './common/gemini.module'
 import { LoggerModule } from './common/logger/logger.module'
@@ -19,6 +21,9 @@ import { VoiceModule } from './modules/voice/voice.module'
       envFilePath: ['.env.local', '.env']
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60_000, limit: 30 }]
+    }),
     LoggerModule.register({
       isGlobal: true,
       expressLogParserOptions: {
@@ -40,6 +45,7 @@ import { VoiceModule } from './modules/voice/voice.module'
     VoiceModule,
     ConversationModule,
     StoryCardModule
-  ]
+  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })
 export class AppModule {}
