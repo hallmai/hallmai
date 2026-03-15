@@ -25,6 +25,7 @@ interface WsMessage {
 interface ClientSession {
   conversationId: number
   deviceId: number
+  rootConversationId: number
 }
 
 @SkipThrottle()
@@ -195,13 +196,26 @@ export class VoiceGateway
           }
         })()
       })
+
+      // Wire session renewal to handle long conversations
+      this.voiceService.setRenewalHandler(client, () => {
+        void (async () => {
+          try {
+            await this.handleSessionRenewal(client)
+          } catch (err) {
+            this.logger.error(`Session renewal error: ${String(err)}`)
+            this.voiceService.resetRenewalState(client)
+          }
+        })()
+      })
       const conversation = await this.conversationService.create(
         device.id,
         rootId
       )
       this.clientSessions.set(client, {
         conversationId: conversation.id,
-        deviceId: device.id
+        deviceId: device.id,
+        rootConversationId: conversation.rootConversationId ?? conversation.id
       })
       this.voiceService.setConversationId(client, conversation.id)
 
@@ -242,6 +256,83 @@ export class VoiceGateway
     } finally {
       this.voiceService.endSession(client)
     }
+  }
+
+  private async handleSessionRenewal(client: WebSocket): Promise<void> {
+    const clientSession = this.clientSessions.get(client)
+    if (!clientSession) return
+
+    const { conversationId, deviceId, rootConversationId } = clientSession
+    const session = this.voiceService.getSession(client)
+    const transcript = session?.transcript?.length
+      ? [...session.transcript]
+      : null
+
+    // 1. Save current conversation
+    await this.conversationService.end(conversationId, transcript)
+
+    // 2. Generate summary (synchronous — need result for recent summaries)
+    if (transcript?.length) {
+      await this.conversationService.summarizeAndReturn(
+        conversationId,
+        transcript
+      )
+    }
+
+    // 3. Soul extraction (fire-and-forget)
+    if (transcript?.length) {
+      this.soulService
+        .extract(deviceId, conversationId, transcript)
+        .catch((err) =>
+          this.logger.error(
+            `Soul extraction failed during renewal: ${String(err)}`
+          )
+        )
+    }
+
+    // 4. Create new conversation with rootConversationId
+    const newConversation = await this.conversationService.create(
+      deviceId,
+      rootConversationId
+    )
+
+    // 5. Reload soul context + recent summaries
+    const [{ profileText, maturity }, recentSummaries] = await Promise.all([
+      this.soulService.getProfileWithMaturity(deviceId),
+      this.conversationService.getRecentSummaries(deviceId, 3)
+    ])
+
+    // 6. Build resume context from transcript
+    let resumeContext: string | undefined
+    if (transcript?.length) {
+      const lines = transcript
+        .filter((e) => e.role === 'user' || e.role === 'ai')
+        .slice(-6)
+        .map((e) => `${e.role === 'user' ? '사용자' : '할마이'}: ${e.text}`)
+        .join('\n')
+      resumeContext = `## 이어서 대화하기\n아래는 방금 직전까지의 대화입니다. 자연스럽게 이어서 대화하세요.\n\n${lines}`
+    }
+
+    // 7. Renew Gemini session
+    await this.voiceService.renewSession(
+      client,
+      profileText ?? undefined,
+      recentSummaries.length ? recentSummaries : undefined,
+      maturity,
+      resumeContext
+    )
+
+    // 8. Update client sessions
+    this.clientSessions.set(client, {
+      conversationId: newConversation.id,
+      deviceId,
+      rootConversationId
+    })
+    this.voiceService.setConversationId(client, newConversation.id)
+
+    this.logger.log(
+      `Session renewed: conversation ${conversationId} → ${newConversation.id}`
+    )
   }
 
   private async endConversation(client: WebSocket): Promise<void> {

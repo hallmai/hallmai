@@ -62,12 +62,12 @@ export class ConversationService {
     })
   }
 
-  async summarize(
+  async summarizeAndReturn(
     conversationId: number,
     transcript: TranscriptEntry[]
-  ): Promise<void> {
+  ): Promise<string | null> {
     const text = formatTranscript(transcript)
-    if (!text) return
+    if (!text) return null
 
     try {
       const response = await this.ai.models.generateContent({
@@ -100,12 +100,22 @@ ${wrapTranscript(text)}`
           summary: parsed.summary
         })
         this.logger.log(`Summary saved for conversation ${conversationId}`)
+        return parsed.summary
       }
+      return null
     } catch (err) {
       this.logger.error(
         `Summary generation failed for conversation ${conversationId}: ${String(err)}`
       )
+      return null
     }
+  }
+
+  async summarize(
+    conversationId: number,
+    transcript: TranscriptEntry[]
+  ): Promise<void> {
+    await this.summarizeAndReturn(conversationId, transcript)
   }
 
   async getRecentSummaries(

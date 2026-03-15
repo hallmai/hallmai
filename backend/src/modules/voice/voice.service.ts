@@ -8,6 +8,7 @@ import { GEMINI_CLIENT } from '../../common/gemini.provider'
 import {
   AUDIO_CONFIG,
   type RecentSummary,
+  SESSION_RENEWAL_TURN_THRESHOLD,
   SILENCE_GRACE_MS,
   SILENCE_TIMEOUT_MS,
   SILENCE_WARNING_MS,
@@ -31,6 +32,10 @@ interface VoiceSession {
   silenceTimer: ReturnType<typeof setTimeout> | null
   silenceGraceTimer: ReturnType<typeof setTimeout> | null
   onSilenceTimeout: (() => void) | null
+  userTurnCount: number
+  isRenewing: boolean
+  audioBuffer: string[]
+  onRenewal: (() => void) | null
 }
 
 interface ToolCallPayload {
@@ -64,116 +69,15 @@ export class VoiceService {
     maturity?: SoulMaturity,
     resumeContext?: string
   ): Promise<void> {
-    const model =
-      this.config.get<string>('GEMINI_VOICE_MODEL') ||
-      this.config.get<string>('GEMINI_MODEL') ||
-      'gemini-2.5-flash-native-audio-preview-12-2025'
+    const systemPromptText =
+      buildSystemPrompt(soulContext, recentSummaries, maturity) +
+      (resumeContext ? `\n\n${resumeContext}` : '')
 
-    const session = await this.ai.live.connect({
-      model,
-      config: {
-        responseModalities: [Modality.AUDIO],
-        inputAudioTranscription: {},
-        outputAudioTranscription: {},
-        tools: [
-          { googleSearch: {} },
-          {
-            functionDeclarations: [
-              {
-                name: 'searchYoutube',
-                description:
-                  '사용자가 노래, 영상, 뉴스 등 미디어를 요청하면 유튜브에서 검색합니다. 검색 결과를 사용자에게 안내하고 어떤 영상을 재생할지 확인받으세요.',
-                parameters: {
-                  type: Type.OBJECT,
-                  properties: {
-                    query: {
-                      type: Type.STRING,
-                      description: '유튜브 검색어'
-                    }
-                  },
-                  required: ['query']
-                }
-              },
-              {
-                name: 'playYoutube',
-                description:
-                  '사용자가 재생을 확인한 후 영상을 재생합니다. searchYoutube 결과에서 사용자가 선택한 videoId를 전달하세요.',
-                parameters: {
-                  type: Type.OBJECT,
-                  properties: {
-                    videoId: {
-                      type: Type.STRING,
-                      description: '재생할 YouTube 영상 ID'
-                    },
-                    title: {
-                      type: Type.STRING,
-                      description: '영상 제목'
-                    }
-                  },
-                  required: ['videoId', 'title']
-                }
-              }
-            ]
-          }
-        ],
-        systemInstruction: {
-          parts: [
-            {
-              text:
-                buildSystemPrompt(soulContext, recentSummaries, maturity) +
-                (resumeContext ? `\n\n${resumeContext}` : '')
-            }
-          ]
-        },
-        speechConfig: {
-          languageCode: 'ko-KR'
-        },
-        realtimeInputConfig: {
-          automaticActivityDetection: {
-            silenceDurationMs: 500
-          }
-        }
-      },
-      callbacks: {
-        onopen: () => {
-          this.logger.debug(`Gemini session opened for ${deviceUuid}`)
-        },
-        onmessage: (msg) => {
-          if (client.readyState !== 1) return
-
-          if (msg.serverContent) {
-            this.handleServerContent(client, msg.serverContent)
-          }
-
-          const toolCall = (msg as unknown as Record<string, unknown>)
-            .toolCall as ToolCallPayload | undefined
-          if (toolCall?.functionCalls) {
-            this.handleToolCalls(client, toolCall)
-          }
-
-          const toolCallCancellation = (
-            msg as unknown as Record<string, unknown>
-          ).toolCallCancellation as ToolCallCancellationPayload | undefined
-          if (toolCallCancellation?.ids) {
-            this.handleToolCancellation(client, toolCallCancellation)
-          }
-        },
-        onerror: (err: ErrorEvent) => {
-          this.logger.error(
-            `Gemini error for ${deviceUuid}: ${err.message}`,
-            err
-          )
-          if (client.readyState === 1) {
-            this.send(client, 'error', { message: 'AI connection error' })
-          }
-        },
-        onclose: (e: CloseEvent) => {
-          this.logger.debug(
-            `Gemini session closed for ${deviceUuid} (code=${e.code}, reason=${e.reason})`
-          )
-        }
-      }
-    })
+    const session = await this.createGeminiSession(
+      client,
+      deviceUuid,
+      systemPromptText
+    )
 
     this.sessions.set(client, {
       geminiSession: session,
@@ -187,7 +91,11 @@ export class VoiceService {
       silenceWarningTimer: null,
       silenceTimer: null,
       silenceGraceTimer: null,
-      onSilenceTimeout: null
+      onSilenceTimeout: null,
+      userTurnCount: 0,
+      isRenewing: false,
+      audioBuffer: [],
+      onRenewal: null
     })
     this.send(client, 'ready', {})
     this.resetSilenceTimer(client)
@@ -199,9 +107,7 @@ export class VoiceService {
           role: 'user',
           parts: [
             {
-              text: resumeContext
-                ? '(유튜브 시청 후 복귀)'
-                : '(대화 시작)'
+              text: resumeContext ? '(유튜브 시청 후 복귀)' : '(대화 시작)'
             }
           ]
         }
@@ -223,6 +129,11 @@ export class VoiceService {
   sendAudio(client: WebSocket, audioBase64: string): void {
     const session = this.sessions.get(client)
     if (!session) return
+
+    if (session.isRenewing) {
+      session.audioBuffer.push(audioBase64)
+      return
+    }
 
     session.geminiSession.sendRealtimeInput({
       media: {
@@ -279,6 +190,83 @@ export class VoiceService {
     }
   }
 
+  resetRenewalState(client: WebSocket): void {
+    const session = this.sessions.get(client)
+    if (session) {
+      session.isRenewing = false
+      session.audioBuffer = []
+    }
+  }
+
+  setRenewalHandler(client: WebSocket, callback: () => void): void {
+    const session = this.sessions.get(client)
+    if (session) {
+      session.onRenewal = callback
+    }
+  }
+
+  async renewSession(
+    client: WebSocket,
+    soulContext?: string,
+    recentSummaries?: RecentSummary[],
+    maturity?: SoulMaturity,
+    resumeContext?: string
+  ): Promise<void> {
+    const session = this.sessions.get(client)
+    if (!session) return
+
+    const { deviceUuid } = session
+
+    // Close old Gemini session
+    try {
+      session.geminiSession.close()
+    } catch (err) {
+      this.logger.warn(`Error closing old Gemini session: ${String(err)}`)
+    }
+
+    // Create new Gemini session
+    const systemPromptText =
+      buildSystemPrompt(soulContext, recentSummaries, maturity) +
+      (resumeContext ? `\n\n${resumeContext}` : '')
+    const newGeminiSession = await this.createGeminiSession(
+      client,
+      deviceUuid,
+      systemPromptText
+    )
+
+    // Reset session data
+    session.geminiSession = newGeminiSession
+    session.transcript = []
+    session.userTurnCount = 0
+    session.lastSpeaker = null
+    session.currentThinking = ''
+
+    // Trigger AI to continue naturally
+    newGeminiSession.sendClientContent({
+      turns: [{ role: 'user', parts: [{ text: '(대화 이어서)' }] }],
+      turnComplete: true
+    })
+
+    // Notify client
+    this.send(client, 'session_renewed', {})
+
+    // Flush audio buffer then unlock
+    const buffer = session.audioBuffer
+    session.audioBuffer = []
+    for (const audio of buffer) {
+      newGeminiSession.sendRealtimeInput({
+        media: {
+          data: audio,
+          mimeType: `audio/pcm;rate=${AUDIO_CONFIG.inputSampleRate}`
+        }
+      })
+    }
+    session.isRenewing = false
+
+    this.resetSilenceTimer(client)
+    this.logger.log(`Session renewed for ${deviceUuid}`)
+  }
+
   resetSilenceTimer(client: WebSocket): void {
     const session = this.sessions.get(client)
     if (!session) return
@@ -304,6 +292,117 @@ export class VoiceService {
         }
       }, SILENCE_GRACE_MS)
     }, SILENCE_TIMEOUT_MS)
+  }
+
+  private async createGeminiSession(
+    client: WebSocket,
+    deviceUuid: string,
+    systemPromptText: string
+  ): Promise<Session> {
+    const model =
+      this.config.get<string>('GEMINI_VOICE_MODEL') ||
+      this.config.get<string>('GEMINI_MODEL') ||
+      'gemini-2.5-flash-native-audio-preview-12-2025'
+
+    return this.ai.live.connect({
+      model,
+      config: {
+        responseModalities: [Modality.AUDIO],
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
+        tools: [
+          { googleSearch: {} },
+          {
+            functionDeclarations: [
+              {
+                name: 'searchYoutube',
+                description:
+                  '사용자가 노래, 영상, 뉴스 등 미디어를 요청하면 유튜브에서 검색합니다. 검색 결과를 사용자에게 안내하고 어떤 영상을 재생할지 확인받으세요.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    query: {
+                      type: Type.STRING,
+                      description: '유튜브 검색어'
+                    }
+                  },
+                  required: ['query']
+                }
+              },
+              {
+                name: 'playYoutube',
+                description:
+                  '사용자가 재생을 확인한 후 영상을 재생합니다. searchYoutube 결과에서 사용자가 선택한 videoId를 전달하세요.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    videoId: {
+                      type: Type.STRING,
+                      description: '재생할 YouTube 영상 ID'
+                    },
+                    title: {
+                      type: Type.STRING,
+                      description: '영상 제목'
+                    }
+                  },
+                  required: ['videoId', 'title']
+                }
+              }
+            ]
+          }
+        ],
+        systemInstruction: {
+          parts: [{ text: systemPromptText }]
+        },
+        speechConfig: {
+          languageCode: 'ko-KR'
+        },
+        realtimeInputConfig: {
+          automaticActivityDetection: {
+            silenceDurationMs: 500
+          }
+        }
+      },
+      callbacks: {
+        onopen: () => {
+          this.logger.debug(`Gemini session opened for ${deviceUuid}`)
+        },
+        onmessage: (msg) => {
+          if (client.readyState !== 1) return
+
+          if (msg.serverContent) {
+            this.handleServerContent(client, msg.serverContent)
+          }
+
+          const toolCall = (msg as unknown as Record<string, unknown>)
+            .toolCall as ToolCallPayload | undefined
+          if (toolCall?.functionCalls) {
+            this.handleToolCalls(client, toolCall)
+          }
+
+          const toolCallCancellation = (
+            msg as unknown as Record<string, unknown>
+          ).toolCallCancellation as ToolCallCancellationPayload | undefined
+          if (toolCallCancellation?.ids) {
+            this.handleToolCancellation(client, toolCallCancellation)
+          }
+        },
+        onerror: (err: ErrorEvent) => {
+          this.logger.error(
+            `Gemini error for ${deviceUuid}: ${err.message}`,
+            err
+          )
+          if (client.readyState === 1) {
+            this.send(client, 'error', { message: 'AI connection error' })
+          }
+        },
+        onclose: (e: CloseEvent) => {
+          this.logger.debug(
+            `Gemini session closed for ${deviceUuid} (code=${e.code}, reason=${e.reason})`
+          )
+        }
+      }
+    })
   }
 
   private handleServerContent(client: WebSocket, serverContent: unknown): void {
@@ -335,6 +434,7 @@ export class VoiceService {
             text: inputTranscription.text
           })
           voiceSession.lastSpeaker = 'user'
+          voiceSession.userTurnCount++
         }
       }
     }
@@ -409,6 +509,19 @@ export class VoiceService {
           conversationId: voiceSession.conversationId
         })
         voiceSession.pendingYoutube = null
+      }
+
+      // Check session renewal threshold
+      if (
+        voiceSession &&
+        voiceSession.userTurnCount >= SESSION_RENEWAL_TURN_THRESHOLD &&
+        !voiceSession.isRenewing &&
+        !voiceSession.pendingYoutube
+      ) {
+        voiceSession.isRenewing = true
+        if (voiceSession.onRenewal) {
+          voiceSession.onRenewal()
+        }
       }
 
       this.resetSilenceTimer(client)

@@ -1,6 +1,6 @@
 # hallmai 피쳐 목록
 
-## Done (15)
+## Done (22)
 
 | # | 기능 | 설명 |
 |---|------|------|
@@ -14,15 +14,20 @@
 | F-25 | 디바이스 등록 중복 에러 개선 | 동시 register 요청 시 upsert 패턴 적용 |
 | F-29 | Soul 엔진 | transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트 |
 | F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색 |
+| F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API로 영상 검색/재생 |
 | F-33 | 구조화 로깅 (Cloud Run) | Winston JSON 포맷 통합. NestLoggerAdapter, bufferLogs |
 | F-34 | Gemini JSON 모드 전환 | Soul 엔진·카드 생성기를 responseMimeType: 'application/json'으로 교체 |
 | F-35 | GeminiProvider 전역화 | 3개 모듈 중복 등록 → @Global() GeminiModule 통합 |
 | F-36 | Prompt Injection 방어 | 카드 생성기에 transcript 격리 태그 및 지시문 무시 경고 추가 |
 | F-37 | Soul 성숙도 기반 프롬프트 | explore/bonding/friend 3단계 시스템 프롬프트 분화 |
-| F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API로 영상 검색/재생 |
 | F-39 | 음성 볼륨 버튼 맥동 | listening/speaking 중 마이크 RMS 볼륨 기반 버튼 scale 맥동 + 노이즈 게이트 |
+| F-40 | RNNoise 노이즈 서프레션 | @sapphi-red/web-noise-suppressor WASM 기반 노이즈 제거 + 설정 토글 |
+| F-42a | 핫키 그리드·인터럽트·VAD | lucide-react 아이콘 핫키 그리드, 클라이언트 인터럽트, silenceDurationMs 500ms, 인사 mute |
+| F-41 | 관계 정립 (호칭/말투) | explore 단계에서 호칭 질문, Soul에 callerName/speechStyle 저장, 기본 존댓말 |
+| F-42 | 대화 요약에 일시 포함 | 상대 시간 라벨(오늘/어제/N일 전), AI가 시간 감각에 맞는 응답 생성 |
+| F-43 | 장기 대화 세션 갱신 | 10턴마다 Gemini 세션 교체, 요약+Soul 유지, 사용자에게 투명 |
 
-## Backlog — Ready (18)
+## Backlog — Ready (16)
 
 선행 피쳐 모두 완료, 바로 착수 가능.
 
@@ -44,7 +49,6 @@
 | F-27 | 음성 통화 시뮬레이터 | 마이크 없이 텍스트로 음성 통화를 테스트하는 개발 도구 | — |
 | F-28 | 설정 UI 버전 노출 | 설정 화면에서 프론트엔드·백엔드 버전 표시 | — |
 | F-38 | 설정 디바이스 UUID 노출 | 시니어(게스트) 설정 화면에 디바이스 UUID 표시 | — |
-| F-40 | RNNoise 노이즈 서프레션 | 프론트엔드 노이즈 게이트를 RNNoise WASM 기반 노이즈 제거로 교체 | F-39 ✅ |
 
 ## Backlog — Blocked (4)
 

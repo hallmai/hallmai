@@ -112,7 +112,7 @@ export class VoiceClient {
   private handleMessage(msg: WsMessage): void {
     switch (msg.event) {
       case 'ready':
-        this.muteUntil = Date.now() + 3000
+        this.muteUntil = Infinity
         this.player = new AudioPlayer()
         this.startRecording().catch(() => {
             this.handler.onError('Microphone access denied')
@@ -125,17 +125,22 @@ export class VoiceClient {
         if (msg.data?.data) {
           if (this.state === 'connecting' || this.state === 'listening') {
             this.setState('speaking')
+            if (this.muteUntil === Infinity) {
+              this.muteUntil = Date.now() + 3000
+            }
           }
           this.player?.enqueue(msg.data.data as string)
         }
         break
       case 'interrupted':
         this.pendingInterrupt = false
+        this.muteUntil = 0
         this.player?.interrupt()
         this.setState('listening')
         break
       case 'turn_complete':
         this.pendingInterrupt = false
+        this.muteUntil = 0
         this.setState('listening')
         break
       case 'ended':
@@ -147,6 +152,10 @@ export class VoiceClient {
         break
       case 'youtube_play':
         this.handler.onYoutubePlay?.(msg.data as unknown as YoutubePlayData)
+        break
+      case 'session_renewed':
+        this.muteUntil = Infinity
+        console.debug('[voice] session renewed')
         break
       case 'silence_warning':
         this.handler.onSilenceWarning?.()
