@@ -22,6 +22,7 @@ docs/04-report/
 docs/plans/
 .worktrees/
 
+build-version.json
 # Terraform
 infra/.terraform/
 infra/*.tfstate
