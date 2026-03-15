@@ -250,7 +250,7 @@ function DeviceUuidCard({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
     navigator.clipboard.writeText(uuid).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   return (
