@@ -139,7 +139,7 @@ export default function CallPage() {
           ref={buttonRef}
           onClick={handleTap}
           disabled={loading}
-          className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-[background-color] duration-300 disabled:opacity-50"
+          className="pressable relative z-10 w-[180px] h-[180px] rounded-full flex items-center justify-center shadow-2xl shadow-[#E8725C]/25 transition-[background-color] duration-300 disabled:opacity-50 outline-none"
           style={{
             backgroundColor: buttonColor,
             transform: isActive ? undefined : "scale(1)",

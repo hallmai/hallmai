@@ -45,6 +45,7 @@
 | F-28 | 설정 UI 버전 노출 | 설정 화면에서 프론트엔드·백엔드 버전 표시 | — |
 | F-31 | 대화 중 유튜브 검색 | Gemini Live API 커스텀 function + YouTube Data API | — |
 | F-38 | 설정 디바이스 UUID 노출 | 시니어(게스트) 설정 화면에 디바이스 UUID 표시 | — |
+| F-40 | RNNoise 노이즈 서프레션 | 프론트엔드 노이즈 게이트를 RNNoise WASM 기반 노이즈 제거로 교체 | F-39 ✅ |
 
 ## Backlog — Blocked (4)
 

@@ -17,6 +17,7 @@
     "@capacitor/ios": "^8.1.0",
     "@capacitor/status-bar": "^8.0.1",
     "@react-oauth/google": "^0.13.4",
+    "@sapphi-red/web-noise-suppressor": "^0.3.5",
     "capacitor-plugin-safe-area": "^5.0.0",
     "next": "16.1.6",
     "react": "19.2.3",

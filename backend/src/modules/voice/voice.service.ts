@@ -1,9 +1,7 @@
 import {
-  EndSensitivity,
   GoogleGenAI,
   Modality,
-  Session,
-  StartSensitivity
+  Session
 } from '@google/genai'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -89,14 +87,7 @@ export class VoiceService {
         speechConfig: {
           languageCode: 'ko-KR'
         },
-        realtimeInputConfig: {
-          automaticActivityDetection: {
-            startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_HIGH,
-            endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
-            prefixPaddingMs: 800,
-            silenceDurationMs: 2000
-          }
-        }
+        realtimeInputConfig: {}
       },
       callbacks: {
         onopen: () => {
