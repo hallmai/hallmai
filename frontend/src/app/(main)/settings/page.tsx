@@ -205,9 +205,10 @@ function GuestSettings({
 }
 
 function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
-  const [enabled, setEnabled] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem("noiseSuppression") === "rnnoise"
-  );
+  const [enabled, setEnabled] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setEnabled(localStorage.getItem("noiseSuppression") === "rnnoise"); }, []);
 
   const toggle = () => {
     const next = !enabled;
@@ -262,7 +263,7 @@ function DeviceUuidCard({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
         onClick={handleCopy}
         className="ml-3 text-[12px] font-medium text-[#E8725C] shrink-0"
       >
-        {copied ? t.settingsDeviceIdCopied : "복사"}
+        {copied ? t.settingsDeviceIdCopied : t.settingsDeviceIdCopy}
       </button>
     </div>
   );
