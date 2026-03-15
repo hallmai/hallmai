@@ -215,6 +215,9 @@ function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
       </div>
       <button
         onClick={toggle}
+        role="switch"
+        aria-checked={enabled}
+        aria-label={t.settingsNoiseSuppression}
         className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? "bg-[#E8725C]" : "bg-stone-300"}`}
       >
         <span

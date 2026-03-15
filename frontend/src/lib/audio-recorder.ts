@@ -78,7 +78,10 @@ export class AudioRecorder {
 
     source.connect(this.rnnoiseNode)
     this.rnnoiseNode.connect(this.workletNode)
-    this.workletNode.connect(this.audioContext.destination)
+    const mute = this.audioContext.createGain()
+    mute.gain.value = 0
+    this.workletNode.connect(mute)
+    mute.connect(this.audioContext.destination)
     console.log('[AudioRecorder] RNNoise active (48kHz)')
   }
 
@@ -110,7 +113,10 @@ export class AudioRecorder {
     }
 
     source.connect(this.workletNode)
-    this.workletNode.connect(this.audioContext.destination)
+    const mute = this.audioContext.createGain()
+    mute.gain.value = 0
+    this.workletNode.connect(mute)
+    mute.connect(this.audioContext.destination)
     console.log('[AudioRecorder] Direct passthrough (16kHz)')
   }
 

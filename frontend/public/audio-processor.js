@@ -8,7 +8,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     if (input.length > 0) {
       const channelData = input[0]
       if (channelData.length > 0) {
-        this.port.postMessage(channelData)
+        this.port.postMessage(channelData.slice())
       }
     }
     return true
