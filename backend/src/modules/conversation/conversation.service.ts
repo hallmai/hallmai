@@ -25,12 +25,25 @@ export class ConversationService {
     private readonly conversationRepository: Repository<Conversation>
   ) {}
 
-  async create(deviceId: number): Promise<Conversation> {
+  async create(
+    deviceId: number,
+    rootConversationId?: number
+  ): Promise<Conversation> {
     const conversation = this.conversationRepository.create({
       deviceId,
-      startedAt: new Date()
+      startedAt: new Date(),
+      rootConversationId: rootConversationId ?? null
     })
-    return this.conversationRepository.save(conversation)
+    const saved = await this.conversationRepository.save(conversation)
+    if (!rootConversationId) {
+      saved.rootConversationId = saved.id
+      await this.conversationRepository.save(saved)
+    }
+    return saved
+  }
+
+  async findById(id: number): Promise<Conversation | null> {
+    return this.conversationRepository.findOneBy({ id })
   }
 
   async end(id: number, transcript: TranscriptEntry[] | null): Promise<void> {

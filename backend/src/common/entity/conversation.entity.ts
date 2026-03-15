@@ -23,6 +23,13 @@ export class Conversation extends BaseEntity {
   @JoinColumn({ name: 'device_id' })
   device: Device
 
+  @Column({ name: 'root_conversation_id', type: 'int', nullable: true })
+  rootConversationId: number | null
+
+  @ManyToOne(() => Conversation)
+  @JoinColumn({ name: 'root_conversation_id' })
+  rootConversation: Conversation
+
   @Column({ name: 'started_at', type: 'timestamptz' })
   startedAt: Date
 

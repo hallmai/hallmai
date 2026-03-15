@@ -10,12 +10,19 @@ interface WsMessage {
   data?: Record<string, unknown>
 }
 
+export interface YoutubePlayData {
+  videoId: string
+  title: string
+  conversationId: number
+}
+
 export type VoiceEventHandler = {
   onStateChange: (state: VoiceState) => void
   onError: (message: string) => void
   onVolume?: (level: number) => void
   onSilenceWarning?: () => void
   onToolActivity?: (data: Record<string, unknown>) => void
+  onYoutubePlay?: (data: YoutubePlayData) => void
 }
 
 export class VoiceClient {
@@ -25,6 +32,8 @@ export class VoiceClient {
   private state: VoiceState = 'idle'
   private handler: VoiceEventHandler
   private disconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private disconnectResolve: (() => void) | null = null
+  private pendingInterrupt = false
 
   private readonly wsUrl: string
 
@@ -34,7 +43,10 @@ export class VoiceClient {
     this.wsUrl = `${wsBase}/ws/voice`
   }
 
-  async connect(deviceUuid: string): Promise<void> {
+  async connect(
+    deviceUuid: string,
+    options?: { resumeFrom?: number }
+  ): Promise<void> {
     if (this.state !== 'idle') return
 
     this.setState('connecting')
@@ -44,7 +56,7 @@ export class VoiceClient {
     this.ws = new WebSocket(url)
 
     this.ws.onopen = () => {
-      this.send('start', { deviceUuid })
+      this.send('start', { deviceUuid, ...options })
     }
 
     this.ws.onmessage = (event) => {
@@ -74,16 +86,26 @@ export class VoiceClient {
   }
 
   async disconnect(): Promise<void> {
-    if (this.state === 'idle' || this.state === 'ending') return
+    if (this.state === 'idle') return
+    if (this.state === 'ending') {
+      return new Promise<void>((resolve) => {
+        const prev = this.disconnectResolve
+        this.disconnectResolve = () => { prev?.(); resolve() }
+      })
+    }
 
     this.setState('ending')
     this.send('end', {})
 
-    // Give the server a moment to send 'ended', then force cleanup
-    this.disconnectTimer = setTimeout(() => {
-      this.cleanup()
-      this.setState('idle')
-    }, 2000)
+    return new Promise<void>((resolve) => {
+      this.disconnectResolve = resolve
+
+      // Force cleanup if server doesn't respond in time
+      this.disconnectTimer = setTimeout(() => {
+        this.cleanup()
+        this.setState('idle')
+      }, 2000)
+    })
   }
 
   private handleMessage(msg: WsMessage): void {
@@ -97,6 +119,7 @@ export class VoiceClient {
           })
         break
       case 'audio':
+        if (this.pendingInterrupt) break
         if (msg.data?.data) {
           if (this.state === 'listening' || this.state === 'connecting') {
             this.setState('speaking')
@@ -105,10 +128,12 @@ export class VoiceClient {
         }
         break
       case 'interrupted':
+        this.pendingInterrupt = false
         this.player?.interrupt()
         this.setState('listening')
         break
       case 'turn_complete':
+        this.pendingInterrupt = false
         this.setState('listening')
         break
       case 'ended':
@@ -117,6 +142,9 @@ export class VoiceClient {
         break
       case 'tool_activity':
         this.handler.onToolActivity?.(msg.data || {})
+        break
+      case 'youtube_play':
+        this.handler.onYoutubePlay?.(msg.data as unknown as YoutubePlayData)
         break
       case 'silence_warning':
         this.handler.onSilenceWarning?.()
@@ -139,6 +167,18 @@ export class VoiceClient {
     )
   }
 
+  interrupt(): void {
+    if (this.state !== 'speaking') return
+    this.pendingInterrupt = true
+    this.player?.interrupt()
+    this.setState('listening')
+  }
+
+  sendHotkey(prompt: string): void {
+    this.interrupt()
+    this.send('hotkey', { prompt })
+  }
+
   private send(event: string, data: Record<string, unknown>): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ event, data }))
@@ -150,6 +190,7 @@ export class VoiceClient {
       clearTimeout(this.disconnectTimer)
       this.disconnectTimer = null
     }
+    this.pendingInterrupt = false
     this.recorder?.stop()
     this.recorder = null
     this.player?.destroy()
@@ -163,5 +204,9 @@ export class VoiceClient {
   private setState(state: VoiceState): void {
     this.state = state
     this.handler.onStateChange(state)
+    if (state === 'idle' && this.disconnectResolve) {
+      this.disconnectResolve()
+      this.disconnectResolve = null
+    }
   }
 }

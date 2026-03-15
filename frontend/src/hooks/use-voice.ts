@@ -1,16 +1,25 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { VoiceClient, type VoiceState } from '@/lib/voice-client'
+import {
+  VoiceClient,
+  type VoiceState,
+  type YoutubePlayData
+} from '@/lib/voice-client'
 
 export function useVoice(deviceUuid: string | null) {
   const [state, setState] = useState<VoiceState>('idle')
   const [error, setError] = useState<string | null>(null)
   const [silenceWarning, setSilenceWarning] = useState(false)
+  const [youtubeVideo, setYoutubeVideo] = useState<{
+    videoId: string
+    title: string
+  } | null>(null)
   const volumeRef = useRef(0)
   const clientRef = useRef<VoiceClient | null>(null)
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resumeFromRef = useRef<number | null>(null)
 
   useEffect(() => {
     const client = new VoiceClient({
@@ -31,6 +40,11 @@ export function useVoice(deviceUuid: string | null) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
         silenceTimerRef.current = setTimeout(() => setSilenceWarning(false), 5000)
       },
+      onYoutubePlay: (data: YoutubePlayData) => {
+        setYoutubeVideo({ videoId: data.videoId, title: data.title })
+        resumeFromRef.current = data.conversationId
+        client.disconnect()
+      },
     })
     clientRef.current = client
 
@@ -41,16 +55,36 @@ export function useVoice(deviceUuid: string | null) {
     }
   }, [])
 
-  const start = useCallback(async () => {
-    if (!deviceUuid) return
-    setError(null)
-    setSilenceWarning(false)
-    await clientRef.current?.connect(deviceUuid)
-  }, [deviceUuid])
+  const start = useCallback(
+    async (options?: { resumeFrom?: number }) => {
+      if (!deviceUuid) return
+      setError(null)
+      setSilenceWarning(false)
+      await clientRef.current?.connect(deviceUuid, options)
+    },
+    [deviceUuid]
+  )
 
   const stop = useCallback(async () => {
     await clientRef.current?.disconnect()
   }, [])
 
-  return { state, error, silenceWarning, volumeRef, start, stop }
+  const interrupt = useCallback(() => {
+    clientRef.current?.interrupt()
+  }, [])
+
+  const triggerHotkey = useCallback((prompt: string) => {
+    clientRef.current?.sendHotkey(prompt)
+  }, [])
+
+  const closeYoutube = useCallback(async () => {
+    setYoutubeVideo(null)
+    const resumeId = resumeFromRef.current
+    resumeFromRef.current = null
+    // Wait for disconnect to fully complete before reconnecting
+    await clientRef.current?.disconnect()
+    await start({ resumeFrom: resumeId ?? undefined })
+  }, [start])
+
+  return { state, error, silenceWarning, volumeRef, youtubeVideo, start, stop, interrupt, closeYoutube, triggerHotkey }
 }

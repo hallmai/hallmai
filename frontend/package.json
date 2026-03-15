@@ -19,6 +19,7 @@
     "@react-oauth/google": "^0.13.4",
     "@sapphi-red/web-noise-suppressor": "^0.3.5",
     "capacitor-plugin-safe-area": "^5.0.0",
+    "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",

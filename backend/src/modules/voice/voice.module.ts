@@ -7,6 +7,7 @@ import { ConversationModule } from '../conversation/conversation.module'
 import { SoulModule } from '../soul/soul.module'
 import { VoiceGateway } from './voice.gateway'
 import { VoiceService } from './voice.service'
+import { YoutubeService } from './youtube.service'
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { VoiceService } from './voice.service'
       })
     })
   ],
-  providers: [VoiceGateway, VoiceService],
+  providers: [VoiceGateway, VoiceService, YoutubeService],
   exports: [VoiceService]
 })
 export class VoiceModule {}

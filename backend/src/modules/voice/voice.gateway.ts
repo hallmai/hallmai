@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   WebSocketGateway
 } from '@nestjs/websockets'
 import type { IncomingMessage } from 'http'
@@ -14,6 +15,7 @@ import { Device } from '../../common/entity/device.entity'
 import { ConversationService } from '../conversation/conversation.service'
 import { SoulService } from '../soul/soul.service'
 import { VoiceService } from './voice.service'
+import { YoutubeService } from './youtube.service'
 
 interface WsMessage {
   event: string
@@ -27,7 +29,9 @@ interface ClientSession {
 
 @SkipThrottle()
 @WebSocketGateway({ path: '/ws/voice' })
-export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class VoiceGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
   private readonly logger = new Logger(VoiceGateway.name)
   private readonly clientSessions = new Map<WebSocket, ClientSession>()
 
@@ -36,9 +40,34 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly conversationService: ConversationService,
     private readonly soulService: SoulService,
     private readonly jwtService: JwtService,
+    private readonly youtubeService: YoutubeService,
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>
   ) {}
+
+  afterInit(): void {
+    this.voiceService.registerTool('searchYoutube', async (args) => {
+      const query = args.query as string
+      const results = await this.youtubeService.search(query)
+      if (results.length === 0) return { error: '검색 결과가 없습니다' }
+      return {
+        results: results.map((r, i) => ({
+          index: i + 1,
+          videoId: r.videoId,
+          title: r.title
+        }))
+      }
+    })
+
+    this.voiceService.registerTool('playYoutube', async (args) => {
+      const videoId = args.videoId as string
+      const title = args.title as string
+      if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+        return { error: 'Invalid video ID' }
+      }
+      return { videoId, title }
+    })
+  }
 
   handleConnection(client: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '', `http://${req.headers.host}`)
@@ -93,6 +122,9 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
       case 'end':
         await this.handleEnd(client)
         break
+      case 'hotkey':
+        this.handleHotkey(client, msg.data)
+        break
       default:
         this.logger.warn(`Unknown event: ${msg.event}`)
     }
@@ -114,6 +146,8 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return
     }
 
+    const resumeFrom = data?.resumeFrom as number | undefined
+
     try {
       // Load soul context + recent summaries in parallel for system prompt
       const [{ profileText, maturity }, recentSummaries] = await Promise.all([
@@ -122,12 +156,31 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
       ])
       this.logger.debug(`Soul maturity: ${maturity} for device ${deviceUuid}`)
       const soulContext = profileText ?? undefined
+
+      // Build resume context from previous conversation transcript
+      let resumeContext: string | undefined
+      let rootId: number | undefined
+      if (resumeFrom) {
+        const prevConversation =
+          await this.conversationService.findById(resumeFrom)
+        rootId = prevConversation?.rootConversationId ?? undefined
+        if (prevConversation?.transcript?.length) {
+          const lines = prevConversation.transcript
+            .filter((e) => e.role === 'user' || e.role === 'ai')
+            .slice(-10)
+            .map((e) => `${e.role === 'user' ? '사용자' : '할마이'}: ${e.text}`)
+            .join('\n')
+          resumeContext = `## 이어서 대화하기\n방금 유튜브 영상을 시청하고 돌아왔습니다. 아래 직전 대화 내용을 참고해서 자연스럽게 이어서 대화하세요.\n첫 인사를 다시 하지 마세요. "영상 잘 보셨어요?" 같은 가벼운 말로 이어가세요.\n\n### 직전 대화\n${lines}`
+        }
+      }
+
       await this.voiceService.startSession(
         client,
         deviceUuid,
         soulContext,
         recentSummaries.length ? recentSummaries : undefined,
-        maturity
+        maturity,
+        resumeContext
       )
 
       // Wire silence timeout to auto-end conversation
@@ -142,17 +195,21 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }
         })()
       })
-
-      // Create conversation record
-      const conversation = await this.conversationService.create(device.id)
+      const conversation = await this.conversationService.create(
+        device.id,
+        rootId
+      )
       this.clientSessions.set(client, {
         conversationId: conversation.id,
         deviceId: device.id
       })
+      this.voiceService.setConversationId(client, conversation.id)
 
       // Client may have disconnected during async setup
       if (client.readyState !== 1) {
-        this.logger.debug('Client disconnected during session setup, cleaning up')
+        this.logger.debug(
+          'Client disconnected during session setup, cleaning up'
+        )
         await this.endConversation(client)
         this.voiceService.endSession(client)
         return
@@ -168,6 +225,15 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const audioData = data?.data as string
     if (!audioData) return
     this.voiceService.sendAudio(client, audioData)
+  }
+
+  private handleHotkey(
+    client: WebSocket,
+    data?: Record<string, unknown>
+  ): void {
+    const prompt = data?.prompt as string
+    if (!prompt) return
+    this.voiceService.sendHotkeyPrompt(client, prompt)
   }
 
   private async handleEnd(client: WebSocket): Promise<void> {

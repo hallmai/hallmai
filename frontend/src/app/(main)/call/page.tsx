@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useI18n } from "@/lib/i18n";
+import { Search, Youtube, Sun, Newspaper, Music, BookOpen, Dumbbell, HelpCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useI18n, type DictionaryKey } from "@/lib/i18n";
 import { useDevice } from "@/hooks/use-device";
 import { useVoice } from "@/hooks/use-voice";
 import { useCallState } from "@/contexts/call-state";
@@ -12,10 +14,28 @@ const subscribeAuth = () => () => {};
 const getAuthSnapshot = () => isTokenValid();
 const getServerAuthSnapshot = () => false;
 
+const HOTKEYS: Array<{
+  id: string;
+  icon: LucideIcon;
+  labelKey: DictionaryKey;
+  descKey: DictionaryKey;
+  enabled: boolean;
+  prompt?: string;
+}> = [
+  { id: "search", icon: Search, labelKey: "hotkeySearch", descKey: "hotkeySearchDesc", enabled: true, prompt: "(검색 요청)" },
+  { id: "youtube", icon: Youtube, labelKey: "hotkeyYoutube", descKey: "hotkeyYoutubeDesc", enabled: true, prompt: "(유튜브 검색 요청)" },
+  { id: "weather", icon: Sun, labelKey: "hotkeyWeather", descKey: "hotkeyWeatherDesc", enabled: false },
+  { id: "news", icon: Newspaper, labelKey: "hotkeyNews", descKey: "hotkeyNewsDesc", enabled: false },
+  { id: "music", icon: Music, labelKey: "hotkeyMusic", descKey: "hotkeyMusicDesc", enabled: false },
+  { id: "story", icon: BookOpen, labelKey: "hotkeyStory", descKey: "hotkeyStoryDesc", enabled: false },
+  { id: "exercise", icon: Dumbbell, labelKey: "hotkeyExercise", descKey: "hotkeyExerciseDesc", enabled: false },
+  { id: "help", icon: HelpCircle, labelKey: "hotkeyHelp", descKey: "hotkeyHelpDesc", enabled: false },
+];
+
 export default function CallPage() {
   const { t } = useI18n();
   const { deviceUuid, linkCode, linked, loading } = useDevice();
-  const { state, error, silenceWarning, volumeRef, start, stop } = useVoice(deviceUuid);
+  const { state, error, silenceWarning, volumeRef, youtubeVideo, start, stop, interrupt, closeYoutube, triggerHotkey } = useVoice(deviceUuid);
   const { setCallActive } = useCallState();
   const [cycle, setCycle] = useState(0);
   const isLoggedIn = useSyncExternalStore(subscribeAuth, getAuthSnapshot, getServerAuthSnapshot);
@@ -52,7 +72,9 @@ export default function CallPage() {
     if (loading) return;
     if (state === "idle") {
       start();
-    } else if (state === "connecting" || state === "listening" || state === "speaking") {
+    } else if (state === "speaking") {
+      interrupt();
+    } else if (state === "connecting" || state === "listening") {
       stop();
       setCycle((c) => c + 1);
     }
@@ -94,13 +116,41 @@ export default function CallPage() {
       : "#E8725C";
 
   return (
-    <div className="relative flex flex-1 flex-col items-center justify-center">
+    <div className="relative flex flex-1 flex-col items-center">
       {/* Senior mode status indicator (top-right) */}
       {!isLoggedIn && !loading && (
-        <span className="absolute top-5 right-5 text-[14px] font-mono font-bold text-stone-400 tracking-[0.15em]">
+        <span className="absolute top-2 right-5 text-[14px] font-mono font-bold text-stone-400 tracking-[0.15em]">
           {linked ? t.linkedFamily : linkCode}
         </span>
       )}
+
+      {/* Hotkey grid — animates in/out */}
+      <div
+        className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
+          isActive ? "max-h-[160px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="pt-12 px-4 grid grid-cols-4 gap-2">
+          {HOTKEYS.map((hk) => (
+            <button
+              key={hk.id}
+              disabled={!hk.enabled}
+              onClick={() => hk.prompt && triggerHotkey(hk.prompt)}
+              className={`pressable flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors ${
+                hk.enabled
+                  ? "text-[#E8725C] active:bg-[#E8725C]/10"
+                  : "text-stone-300 opacity-40"
+              }`}
+            >
+              <hk.icon className="w-5 h-5" strokeWidth={2} />
+              <span className="text-[11px] font-semibold">{t[hk.labelKey]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Button + Label wrapper — centers in remaining space */}
+      <div className="flex flex-1 flex-col items-center justify-center">
 
       {/* Main Button Area */}
       <div className="relative flex items-center justify-center">
@@ -194,7 +244,7 @@ export default function CallPage() {
       </div>
 
       {/* Label */}
-      <div className="mt-14 text-center transition-all duration-500">
+      <div className="mt-14 min-h-[88px] text-center transition-all duration-500">
         <p
           className="text-[32px] font-bold italic tracking-tight leading-tight"
           style={{
@@ -210,6 +260,8 @@ export default function CallPage() {
         )}
       </div>
 
+      </div>{/* End Button + Label wrapper */}
+
       {/* Settings — senior mode only, bottom right, hidden during call */}
       {showSettingsButton && (
         <Link
@@ -221,6 +273,32 @@ export default function CallPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </Link>
+      )}
+
+      {/* YouTube player overlay */}
+      {youtubeVideo && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center">
+          <div className="w-full max-w-[430px] px-4">
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={closeYoutube}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl"
+                aria-label="Close video"
+              >
+                &#x2715;
+              </button>
+            </div>
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute inset-0 w-full h-full rounded-xl"
+                src={`https://www.youtube.com/embed/${youtubeVideo.videoId}?autoplay=1`}
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                allow="autoplay; encrypted-media"
+                title={youtubeVideo.title}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

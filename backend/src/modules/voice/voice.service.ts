@@ -1,8 +1,4 @@
-import {
-  GoogleGenAI,
-  Modality,
-  Session
-} from '@google/genai'
+import { GoogleGenAI, Modality, Session, Type } from '@google/genai'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type WebSocket from 'ws'
@@ -25,10 +21,12 @@ type ToolHandler = (
 interface VoiceSession {
   geminiSession: Session
   deviceUuid: string
+  conversationId: number | null
   transcript: TranscriptEntry[]
   lastSpeaker: 'user' | 'ai' | null
   currentThinking: string
   pendingToolCalls: Set<string>
+  pendingYoutube: { videoId: string; title: string } | null
   silenceWarningTimer: ReturnType<typeof setTimeout> | null
   silenceTimer: ReturnType<typeof setTimeout> | null
   silenceGraceTimer: ReturnType<typeof setTimeout> | null
@@ -63,7 +61,8 @@ export class VoiceService {
     deviceUuid: string,
     soulContext?: string,
     recentSummaries?: RecentSummary[],
-    maturity?: SoulMaturity
+    maturity?: SoulMaturity,
+    resumeContext?: string
   ): Promise<void> {
     const model =
       this.config.get<string>('GEMINI_VOICE_MODEL') ||
@@ -76,18 +75,64 @@ export class VoiceService {
         responseModalities: [Modality.AUDIO],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
-        tools: [{ googleSearch: {} }],
+        tools: [
+          { googleSearch: {} },
+          {
+            functionDeclarations: [
+              {
+                name: 'searchYoutube',
+                description:
+                  '사용자가 노래, 영상, 뉴스 등 미디어를 요청하면 유튜브에서 검색합니다. 검색 결과를 사용자에게 안내하고 어떤 영상을 재생할지 확인받으세요.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    query: {
+                      type: Type.STRING,
+                      description: '유튜브 검색어'
+                    }
+                  },
+                  required: ['query']
+                }
+              },
+              {
+                name: 'playYoutube',
+                description:
+                  '사용자가 재생을 확인한 후 영상을 재생합니다. searchYoutube 결과에서 사용자가 선택한 videoId를 전달하세요.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    videoId: {
+                      type: Type.STRING,
+                      description: '재생할 YouTube 영상 ID'
+                    },
+                    title: {
+                      type: Type.STRING,
+                      description: '영상 제목'
+                    }
+                  },
+                  required: ['videoId', 'title']
+                }
+              }
+            ]
+          }
+        ],
         systemInstruction: {
           parts: [
             {
-              text: buildSystemPrompt(soulContext, recentSummaries, maturity)
+              text:
+                buildSystemPrompt(soulContext, recentSummaries, maturity) +
+                (resumeContext ? `\n\n${resumeContext}` : '')
             }
           ]
         },
         speechConfig: {
           languageCode: 'ko-KR'
         },
-        realtimeInputConfig: {}
+        realtimeInputConfig: {
+          automaticActivityDetection: {
+            silenceDurationMs: 500
+          }
+        }
       },
       callbacks: {
         onopen: () => {
@@ -133,10 +178,12 @@ export class VoiceService {
     this.sessions.set(client, {
       geminiSession: session,
       deviceUuid,
+      conversationId: null,
       transcript: [],
       lastSpeaker: null,
       currentThinking: '',
       pendingToolCalls: new Set(),
+      pendingYoutube: null,
       silenceWarningTimer: null,
       silenceTimer: null,
       silenceGraceTimer: null,
@@ -145,9 +192,30 @@ export class VoiceService {
     this.send(client, 'ready', {})
     this.resetSilenceTimer(client)
 
-    // Trigger AI to greet first
+    // Trigger AI to greet or resume
     session.sendClientContent({
-      turns: [{ role: 'user', parts: [{ text: '(대화 시작)' }] }],
+      turns: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: resumeContext
+                ? '(유튜브 시청 후 복귀)'
+                : '(대화 시작)'
+            }
+          ]
+        }
+      ],
+      turnComplete: true
+    })
+  }
+
+  sendHotkeyPrompt(client: WebSocket, text: string): void {
+    const session = this.sessions.get(client)
+    if (!session) return
+    this.resetSilenceTimer(client)
+    session.geminiSession.sendClientContent({
+      turns: [{ role: 'user', parts: [{ text }] }],
       turnComplete: true
     })
   }
@@ -174,6 +242,7 @@ export class VoiceService {
 
     this.clearSilenceTimers(session)
     session.pendingToolCalls.clear()
+    session.pendingYoutube = null
 
     try {
       session.geminiSession.close()
@@ -194,6 +263,13 @@ export class VoiceService {
   registerTool(name: string, handler: ToolHandler): void {
     this.toolHandlers.set(name, handler)
     this.logger.log(`Tool registered: ${name}`)
+  }
+
+  setConversationId(client: WebSocket, conversationId: number): void {
+    const session = this.sessions.get(client)
+    if (session) {
+      session.conversationId = conversationId
+    }
   }
 
   setSilenceCallback(client: WebSocket, callback: () => void): void {
@@ -324,6 +400,17 @@ export class VoiceService {
         voiceSession.lastSpeaker = null
       }
       this.send(client, 'turn_complete', {})
+
+      // Send youtube_play after AI finishes speaking
+      if (voiceSession?.pendingYoutube) {
+        this.send(client, 'youtube_play', {
+          videoId: voiceSession.pendingYoutube.videoId,
+          title: voiceSession.pendingYoutube.title,
+          conversationId: voiceSession.conversationId
+        })
+        voiceSession.pendingYoutube = null
+      }
+
       this.resetSilenceTimer(client)
     }
   }
@@ -361,6 +448,14 @@ export class VoiceService {
               entry.toolStatus = 'completed'
             }
             voiceSession.pendingToolCalls.delete(fc.id)
+
+            // playYoutube: save for sending after turn_complete
+            if (fc.name === 'playYoutube' && result.videoId) {
+              voiceSession.pendingYoutube = result as {
+                videoId: string
+                title: string
+              }
+            }
 
             this.trySendToolResponse(voiceSession.geminiSession, [
               { name: fc.name, id: fc.id, response: result }
