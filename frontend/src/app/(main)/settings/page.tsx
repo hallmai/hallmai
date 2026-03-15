@@ -5,7 +5,7 @@ import { apiGoogleLogin, clearAuth, saveAuth, subscribeAuth } from "@/lib/auth";
 import { useGoogleLogin } from "@react-oauth/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 type UserSnapshot = { name: string; email: string; profileImage?: string } | null;
 let cachedRaw: string | null = null;
@@ -99,6 +99,9 @@ function LoggedInSettings({
         </div>
       </div>
 
+      {/* Noise Suppression */}
+      <NoiseSuppressionToggle t={t} />
+
       {/* Legal Links */}
       <LegalLinks t={t} />
 
@@ -182,9 +185,43 @@ function GuestSettings({
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </div>
 
+      {/* Noise Suppression */}
+      <NoiseSuppressionToggle t={t} />
+
       {/* Legal Links */}
       <LegalLinks t={t} />
     </>
+  );
+}
+
+function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    setEnabled(localStorage.getItem("noiseSuppression") === "rnnoise");
+  }, []);
+
+  const toggle = () => {
+    const next = !enabled;
+    setEnabled(next);
+    localStorage.setItem("noiseSuppression", next ? "rnnoise" : "off");
+  };
+
+  return (
+    <div className="card px-4 py-3.5 flex items-center justify-between">
+      <div>
+        <p className="text-[14px] text-stone-700">{t.settingsNoiseSuppression}</p>
+        <p className="text-[11px] text-stone-400">{t.settingsNoiseSuppressionDesc}</p>
+      </div>
+      <button
+        onClick={toggle}
+        className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? "bg-[#E8725C]" : "bg-stone-300"}`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : ""}`}
+        />
+      </button>
+    </div>
   );
 }
 

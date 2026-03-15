@@ -15,10 +15,9 @@ export class AudioRecorder {
     this.onVolume = onVolume ?? null
     this.resampleRemainder = new Float32Array(0)
 
-    // TODO: remove flag after PoC
-    const forceNoiseGate = true
+    const useRnnoise = typeof window !== 'undefined' && localStorage.getItem('noiseSuppression') === 'rnnoise'
     try {
-      if (forceNoiseGate) throw new Error('forced fallback')
+      if (!useRnnoise) throw new Error('RNNoise disabled')
       await this.startWithRnnoise()
     } catch (e) {
       console.warn('RNNoise init failed, falling back to noise gate', e)
