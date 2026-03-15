@@ -1,10 +1,11 @@
 "use client";
 
-import { useI18n } from "@/lib/i18n";
 import { apiGoogleLogin, clearAuth, saveAuth, subscribeAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { useGoogleLogin } from "@react-oauth/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { fetchPublic } from "@/lib/api";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 type UserSnapshot = { name: string; email: string; profileImage?: string } | null;
@@ -112,6 +113,9 @@ function LoggedInSettings({
       >
         {t.settingsLogout}
       </button>
+
+      {/* Version Info */}
+      <VersionInfo t={t} />
     </>
   );
 }
@@ -188,18 +192,22 @@ function GuestSettings({
       {/* Noise Suppression */}
       <NoiseSuppressionToggle t={t} />
 
+      {/* Device UUID Card (F-38) */}
+      <DeviceUuidCard t={t} />
+
       {/* Legal Links */}
       <LegalLinks t={t} />
+
+      {/* Version Info */}
+      <VersionInfo t={t} />
     </>
   );
 }
 
 function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    setEnabled(localStorage.getItem("noiseSuppression") === "rnnoise");
-  }, []);
+  const [enabled, setEnabled] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("noiseSuppression") === "rnnoise"
+  );
 
   const toggle = () => {
     const next = !enabled;
@@ -225,6 +233,60 @@ function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
         />
       </button>
     </div>
+  );
+}
+
+function DeviceUuidCard({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
+  const [uuid, setUuid] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setUuid(localStorage.getItem("seniorDeviceUuid")); }, []);
+
+  if (!uuid) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(uuid).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="card px-4 py-3.5 flex items-center justify-between">
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] text-stone-700">{t.settingsDeviceId}</p>
+        <p className="text-[11px] text-stone-400 truncate">{uuid}</p>
+      </div>
+      <button
+        onClick={handleCopy}
+        className="ml-3 text-[12px] font-medium text-[#E8725C] shrink-0"
+      >
+        {copied ? t.settingsDeviceIdCopied : "복사"}
+      </button>
+    </div>
+  );
+}
+
+function VersionInfo({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
+  const [apiVersion, setApiVersion] = useState<string | null>(null);
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+
+  useEffect(() => {
+    fetchPublic("/api/health")
+      .then((r) => r.json())
+      .then((data) => { const v = data?.data?.version ?? data?.version; if (v) setApiVersion(v); })
+      .catch(() => {});
+  }, []);
+
+  if (!appVersion && !apiVersion) return null;
+
+  const parts: string[] = [];
+  if (appVersion) parts.push(`${t.settingsVersionApp} ${appVersion}`);
+  if (apiVersion) parts.push(`${t.settingsVersionApi} ${apiVersion}`);
+
+  return (
+    <p className="text-[11px] text-stone-300 text-center">{parts.join(" · ")}</p>
   );
 }
 
