@@ -34,6 +34,7 @@ export class VoiceClient {
   private disconnectTimer: ReturnType<typeof setTimeout> | null = null
   private disconnectResolve: (() => void) | null = null
   private pendingInterrupt = false
+  private muteUntil = 0
 
   private readonly wsUrl: string
 
@@ -111,6 +112,7 @@ export class VoiceClient {
   private handleMessage(msg: WsMessage): void {
     switch (msg.event) {
       case 'ready':
+        this.muteUntil = Date.now() + 3000
         this.player = new AudioPlayer()
         this.startRecording().catch(() => {
             this.handler.onError('Microphone access denied')
@@ -121,7 +123,7 @@ export class VoiceClient {
       case 'audio':
         if (this.pendingInterrupt) break
         if (msg.data?.data) {
-          if (this.state === 'listening' || this.state === 'connecting') {
+          if (this.state === 'connecting' || this.state === 'listening') {
             this.setState('speaking')
           }
           this.player?.enqueue(msg.data.data as string)
@@ -159,6 +161,7 @@ export class VoiceClient {
     this.recorder = new AudioRecorder()
     await this.recorder.start(
       (base64) => {
+        if (Date.now() < this.muteUntil) return
         this.send('audio', { data: base64 })
       },
       this.handler.onVolume
