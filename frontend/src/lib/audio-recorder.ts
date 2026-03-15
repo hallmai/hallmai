@@ -15,14 +15,16 @@ export class AudioRecorder {
     this.onVolume = onVolume ?? null
     this.resampleRemainder = new Float32Array(0)
 
-    const useRnnoise = typeof window !== 'undefined' && localStorage.getItem('noiseSuppression') === 'rnnoise'
+    const useRnnoise =
+      typeof window !== 'undefined' &&
+      localStorage.getItem('noiseSuppression') === 'rnnoise'
     try {
       if (!useRnnoise) throw new Error('RNNoise disabled')
       await this.startWithRnnoise()
     } catch (e) {
-      console.warn('RNNoise init failed, falling back to noise gate', e)
+      if (useRnnoise) console.warn('RNNoise init failed, falling back', e)
       this.cleanup()
-      await this.startWithNoiseGate()
+      await this.startDirect()
     }
   }
 
@@ -56,10 +58,12 @@ export class AudioRecorder {
       maxChannels: 1,
       wasmBinary,
     })
+    this.rnnoiseNode.onprocessorerror = (e) => {
+      console.error('[RNNoise] Worklet processor error:', e)
+    }
 
     this.workletNode = new AudioWorkletNode(this.audioContext, 'audio-processor')
 
-    let logCount = 0
     this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
       const float32 = event.data
       if (this.onVolume) {
@@ -69,10 +73,6 @@ export class AudioRecorder {
       if (downsampled.length === 0) return
       const int16 = float32ToInt16(downsampled)
       const base64 = arrayBufferToBase64(int16.buffer as ArrayBuffer)
-      if (logCount < 5) {
-        console.log(`[RNNoise] frame: in=${float32.length} out=${downsampled.length} rms=${rmsDisplay(float32).toFixed(3)} rate=${this.audioContext?.sampleRate}`)
-        logCount++
-      }
       this.onData?.(base64)
     }
 
@@ -82,7 +82,7 @@ export class AudioRecorder {
     console.log('[AudioRecorder] RNNoise active (48kHz)')
   }
 
-  private async startWithNoiseGate(): Promise<void> {
+  private async startDirect(): Promise<void> {
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         sampleRate: 16000,
@@ -111,7 +111,7 @@ export class AudioRecorder {
 
     source.connect(this.workletNode)
     this.workletNode.connect(this.audioContext.destination)
-    console.log('[AudioRecorder] Noise gate fallback (16kHz)')
+    console.log('[AudioRecorder] Direct passthrough (16kHz)')
   }
 
   private downsample48to16(input: Float32Array): Float32Array {
@@ -128,7 +128,6 @@ export class AudioRecorder {
     }
     const output = new Float32Array(outputLen)
     for (let i = 0; i < outputLen; i++) {
-      // Average 3 samples for anti-aliasing
       const idx = i * 3
       output[i] = (combined[idx] + combined[idx + 1] + combined[idx + 2]) / 3
     }
@@ -157,8 +156,6 @@ export class AudioRecorder {
     this.resampleRemainder = new Float32Array(0)
   }
 }
-
-const NOISE_GATE = 0.05
 
 function rmsDisplay(buf: Float32Array): number {
   let sum = 0
