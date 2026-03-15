@@ -87,9 +87,7 @@ export class VoiceService {
         speechConfig: {
           languageCode: 'ko-KR'
         },
-        realtimeInputConfig: {
-          automaticActivityDetection: {}
-        }
+        realtimeInputConfig: {}
       },
       callbacks: {
         onopen: () => {
