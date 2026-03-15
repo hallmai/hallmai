@@ -1,6 +1,6 @@
 # hallmai 피쳐 목록
 
-## Done (16)
+## Done (15)
 
 | # | 기능 | 설명 |
 |---|------|------|
@@ -14,7 +14,6 @@
 | F-25 | 디바이스 등록 중복 에러 개선 | 동시 register 요청 시 upsert 패턴 적용 |
 | F-29 | Soul 엔진 | transcript에서 Soul 프로필(관심사, 가족관계, 일상패턴, 감정경향, 대화선호) 자동 추출/업데이트 |
 | F-30 | 대화 중 구글 검색 | Gemini Live API `googleSearch` Tool Use로 대화 중 실시간 검색 |
-| F-32 | 시니어 친화 VAD 설정 | startOfSpeech LOW, endOfSpeech LOW, prefixPadding 800ms, silenceDuration 1000ms |
 | F-33 | 구조화 로깅 (Cloud Run) | Winston JSON 포맷 통합. NestLoggerAdapter, bufferLogs |
 | F-34 | Gemini JSON 모드 전환 | Soul 엔진·카드 생성기를 responseMimeType: 'application/json'으로 교체 |
 | F-35 | GeminiProvider 전역화 | 3개 모듈 중복 등록 → @Global() GeminiModule 통합 |
