@@ -282,12 +282,11 @@ function VersionInfo({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
 
   if (!appVersion && !apiVersion) return null;
 
-  const parts: string[] = [];
-  if (appVersion) parts.push(`${t.settingsVersionApp} ${appVersion}`);
-  if (apiVersion) parts.push(`${t.settingsVersionApi} ${apiVersion}`);
-
   return (
-    <p className="text-[11px] text-stone-300 text-center">{parts.join(" · ")}</p>
+    <div className="flex flex-col items-center gap-0.5">
+      {appVersion && <p className="text-[11px] text-stone-300">{t.settingsVersionApp} {appVersion}</p>}
+      {apiVersion && <p className="text-[11px] text-stone-300">{t.settingsVersionApi} {apiVersion}</p>}
+    </div>
   );
 }
 
