@@ -37,17 +37,28 @@ trap cleanup EXIT INT TERM
 
 # 1. Start PostgreSQL (free port 5432, clean up orphans, wait for healthcheck)
 echo "Starting PostgreSQL..."
+if ! docker info >/dev/null 2>&1; then
+  echo "ERROR: Docker is not running. Please start Docker Desktop first."
+  exit 1
+fi
 docker compose down --remove-orphans 2>/dev/null || true
 # Stop any other container using port 5432
 OTHER_PG=$(docker ps --filter "publish=5432" -q 2>/dev/null)
 if [ -n "$OTHER_PG" ]; then
   echo "Stopping other container on port 5432..."
-  docker stop $OTHER_PG 2>/dev/null || true
+  docker stop "$OTHER_PG" 2>/dev/null || true
 fi
 docker compose up -d --wait
 echo "PostgreSQL is ready."
 
-# 2. Start backend + frontend with concurrently
+# 2. Install dependencies
+echo "Installing dependencies..."
+(cd backend && yarn install --frozen-lockfile) &
+(cd frontend && yarn install --frozen-lockfile) &
+wait
+echo "Dependencies ready."
+
+# 3. Start backend + frontend with concurrently
 npx concurrently \
   --names "be,fe" \
   --prefix-colors "cyan,magenta" \

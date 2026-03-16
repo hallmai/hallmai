@@ -10,10 +10,10 @@ interface SeniorTabsProps {
 }
 
 export default function SeniorTabs({ devices, selected, onSelect, onAdd }: SeniorTabsProps) {
-  if (devices.length <= 1 && !devices.length) return null;
+  if (devices.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 px-5 pt-3 pb-1 overflow-x-auto scrollbar-hide">
+    <div className="flex items-center gap-2 px-5 py-3 overflow-x-auto scrollbar-hide min-h-[60px]">
       {devices.map((d) => {
         const isActive = d.pid === selected;
         return (

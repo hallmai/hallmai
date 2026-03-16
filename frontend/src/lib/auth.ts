@@ -110,6 +110,7 @@ export async function refreshAccessToken(): Promise<boolean> {
 }
 
 export function isTokenValid(): boolean {
+  if (typeof window === "undefined") return false;
   const token = localStorage.getItem("accessToken");
   if (!token) return false;
 
