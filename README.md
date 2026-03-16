@@ -30,7 +30,7 @@ The AI remembers their stories, adapts to their personality, and keeps families 
 ## Features
 
 ### Voice Conversation with Living Memory
-- **Soul Engine** — Extracts a 10-dimension personality profile (interests, family, routines, emotions, preferences) from every conversation, stored as JSONB and injected into subsequent sessions
+- **Soul Engine** — Extracts a structured personality profile across 5 dimensions (interests, family, routines, emotions, preferences) from every conversation, stored as JSONB and injected into subsequent sessions
 - **3-Tier Maturity System** — Relationship progresses through *explore → bonding → friend*, each with distinct conversation strategies
 - **Session Renewal** — Transparently swaps Gemini sessions every 10 turns, preserving full context with audio buffering. Users talk for hours without noticing
 
@@ -68,7 +68,7 @@ The AI remembers their stories, adapts to their personality, and keeps families 
 │                                                                  │
 │  ┌─────────────────┐    ┌──────────────────────────────────┐    │
 │  │ Voice Gateway   │───▶│ Gemini Live API                  │    │
-│  │ (WebSocket)     │◀───│ gemini-2.5-flash-native-audio    │    │
+│  │ (WebSocket)     │◀───│ gemini-2.5-flash-native-audio-preview    │    │
 │  │                 │    │                                  │    │
 │  │ • Audio relay   │    │ • Native voice I/O               │    │
 │  │ • Tool dispatch │    │ • Google Search (built-in)       │    │
@@ -93,8 +93,8 @@ The AI remembers their stories, adapts to their personality, and keeps families 
 
 | # | Integration | Model | Purpose |
 |---|------------|-------|---------|
-| 1 | **Gemini Live API** | `gemini-2.5-flash-native-audio` | Real-time bidirectional voice with native Google Search + custom YouTube function calling |
-| 2 | **Soul Engine** | Gemini Text (JSON mode) | Extract 10-dimension personality profile from conversation transcripts |
+| 1 | **Gemini Live API** | `gemini-2.5-flash-native-audio-preview` | Real-time bidirectional voice with native Google Search + custom YouTube function calling |
+| 2 | **Soul Engine** | Gemini Text (JSON mode) | Extract 5-dimension personality profile from conversation transcripts |
 | 3 | **Card Generator** | Gemini Text (JSON mode) | Generate daily Story Cards with topic, quote, and mood from transcripts |
 | 4 | **Summarizer** | Gemini Text | Conversation summarization for session renewal context injection |
 
@@ -123,7 +123,7 @@ The AI remembers their stories, adapts to their personality, and keeps families 
 ### Quick Start (One Command)
 
 ```bash
-git clone https://github.com/hallmai/hallmai.git
+git clone https://github.com/hungryoon/hallmai.git
 cd hallmai
 
 # 1. Start PostgreSQL
@@ -197,7 +197,7 @@ npx cap open ios     # or: npx cap open android
 ### Step 1: Run Locally (5 minutes)
 
 ```bash
-git clone https://github.com/hallmai/hallmai.git
+git clone https://github.com/hungryoon/hallmai.git
 cd hallmai
 docker compose up -d
 cd backend && cp .env.example .env
@@ -323,9 +323,9 @@ hallmai/
 └── docker-compose.yml        # Local PostgreSQL
 ```
 
-## 22 Features Shipped
+## 23 Features Shipped
 
-F-02 Conversation memory · F-04 Personal question pool · F-20 Senior error UX · F-22 Silence detection · F-23 Capacitor native build · F-24 Transcript saving · F-25 Device registration · F-29 Soul Engine · F-30 Google Search · F-31 YouTube search/play · F-33 Structured logging · F-34 JSON mode · F-35 Global GeminiProvider · F-36 Prompt injection defense · F-37 Soul maturity prompts · F-39 Volume pulsation · F-40 RNNoise suppression · F-42a Hotkey grid & interrupt · F-41 Caller name/speech style · F-42 Temporal summaries · F-43 Session renewal · F-44 Camera hotkey
+F-02 Conversation memory · F-03 Today-based questions · F-04 Personal question pool · F-20 Senior error UX · F-22 Silence detection · F-23 Capacitor native build · F-24 Transcript saving · F-25 Device registration · F-29 Soul Engine · F-30 Google Search · F-31 YouTube search/play · F-33 Structured logging · F-34 JSON mode · F-35 Global GeminiProvider · F-36 Prompt injection defense · F-37 Soul maturity prompts · F-39 Volume pulsation · F-40 RNNoise suppression · F-42a Hotkey grid & interrupt · F-41 Caller name/speech style · F-42 Temporal summaries · F-43 Session renewal · F-44 Camera hotkey
 
 ## What's Next
 
