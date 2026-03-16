@@ -94,6 +94,16 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name = "YOUTUBE_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.youtube_api_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      env {
         name = "GOOGLE_CLIENT_ID"
         value_source {
           secret_key_ref {
@@ -130,6 +140,7 @@ resource "google_cloud_run_v2_service" "backend" {
     google_secret_manager_secret_version.db_password,
     google_secret_manager_secret_version.jwt_secret,
     google_secret_manager_secret_version.gemini_api_key,
+    google_secret_manager_secret_version.youtube_api_key,
     google_secret_manager_secret_version.google_client_id,
     google_secret_manager_secret_version.google_client_secret,
   ]

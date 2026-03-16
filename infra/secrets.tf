@@ -48,6 +48,24 @@ resource "google_secret_manager_secret_version" "gemini_api_key" {
   }
 }
 
+# YouTube Data API key — must be set manually
+resource "google_secret_manager_secret" "youtube_api_key" {
+  secret_id = "hallmai-youtube-api-key"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "youtube_api_key" {
+  secret      = google_secret_manager_secret.youtube_api_key.id
+  secret_data = "CHANGE_ME"
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
+}
+
 # Google OAuth Client ID — must be set manually
 resource "google_secret_manager_secret" "google_client_id" {
   secret_id = "hallmai-google-client-id"
