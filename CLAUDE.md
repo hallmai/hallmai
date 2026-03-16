@@ -83,6 +83,11 @@
 - 인프라: Terraform 수동 (`cd infra && terraform apply`), main 직접 커밋
 - **main push 전 반드시 로컬 빌드 검증**: `cd backend && yarn build` + `cd frontend && yarn build`
 
+### Git Push 규칙
+- **push는 사용자가 명시적으로 요청할 때만 실행한다**
+- 커밋 후 자동으로 push하지 않는다
+- force push (`--force`, `--force-with-lease`)도 동일하게 명시적 요청 필요
+
 ### 기타
 - worktree 작업: WorktreeCreate hook이 backend/.env를 자동 복사함
 - 머지 완료된 브랜치는 삭제
