@@ -8,10 +8,12 @@ if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
 function getBuildVersion(): string {
   let git = "unknown";
   try {
-    git = execSync("git describe --tags --always", { encoding: "utf-8" }).trim().replace(/^v/, "");
+    git = execSync("git describe --tags --always", { encoding: "utf-8" })
+      .trim()
+      .replace(/^v/, "")
+      .replace(/-\d+-g[a-f0-9]+$/, ""); // 태그 외 커밋 suffix 제거
   } catch {}
-  const ts = new Date().toISOString().replace(/[-T:]/g, "").slice(4, 12);
-  return `${git}(${ts})`;
+  return git;
 }
 
 const nextConfig: NextConfig = {
