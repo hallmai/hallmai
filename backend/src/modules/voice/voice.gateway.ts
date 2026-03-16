@@ -175,14 +175,36 @@ export class VoiceGateway
         }
       }
 
+      const photoBase64 = data?.photoBase64 as string | undefined
+      const photoMimeType = data?.photoMimeType as string | undefined
+      const ALLOWED_PHOTO_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/webp'
+      ] as const
+      const MAX_PHOTO_BASE64_LENGTH = 2_000_000 // ~1.5MB decoded
+      const hasPhoto = !!(
+        photoBase64 &&
+        photoMimeType &&
+        ALLOWED_PHOTO_TYPES.includes(
+          photoMimeType as (typeof ALLOWED_PHOTO_TYPES)[number]
+        ) &&
+        photoBase64.length <= MAX_PHOTO_BASE64_LENGTH
+      )
+
       await this.voiceService.startSession(
         client,
         deviceUuid,
         soulContext,
         recentSummaries.length ? recentSummaries : undefined,
         maturity,
-        resumeContext
+        resumeContext,
+        hasPhoto
       )
+
+      if (hasPhoto) {
+        this.voiceService.sendPhoto(client, photoBase64!, photoMimeType!)
+      }
 
       // Wire silence timeout to auto-end conversation
       this.voiceService.setSilenceCallback(client, () => {

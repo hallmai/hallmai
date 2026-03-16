@@ -161,6 +161,11 @@
   resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.2.0.tgz#b832a72d6279ab439a7ea5f8b497e13a7f8e4b36"
   integrity sha512-XLm5OsWLPfXQxDxzFS7SOdMEgGvW+2c7TGLXkTR2cSKdkWK5Abns4imlT5qghKYhjM9r74IrDkBWg/9ALUGNKQ==
 
+"@capacitor/camera@^8.0.2":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/camera/-/camera-8.0.2.tgz#6e9c80ff219461bee08315e0dba4773fa75cdba4"
+  integrity sha512-v2BsKFjJSg0dMl/UO7jEvrAvjChCGrzQG5jx4yN2t8LnC7eFDh0YkSg1t+AMNveSDSKCvAsTk/JUzzr5VAvzmg==
+
 "@capacitor/cli@^7.5.0":
   version "7.6.0"
   resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-7.6.0.tgz#4fb7b795caf3842e81a8fb98349664c896fffa19"

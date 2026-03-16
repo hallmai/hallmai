@@ -67,7 +67,8 @@ export class VoiceService {
     soulContext?: string,
     recentSummaries?: RecentSummary[],
     maturity?: SoulMaturity,
-    resumeContext?: string
+    resumeContext?: string,
+    skipInitialTrigger?: boolean
   ): Promise<void> {
     const systemPromptText =
       buildSystemPrompt(soulContext, recentSummaries, maturity) +
@@ -100,15 +101,34 @@ export class VoiceService {
     this.send(client, 'ready', {})
     this.resetSilenceTimer(client)
 
-    // Trigger AI to greet or resume
-    session.sendClientContent({
+    // Trigger AI to greet or resume (skip when photo will be sent instead)
+    if (!skipInitialTrigger) {
+      session.sendClientContent({
+        turns: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: resumeContext ? '(유튜브 시청 후 복귀)' : '(대화 시작)'
+              }
+            ]
+          }
+        ],
+        turnComplete: true
+      })
+    }
+  }
+
+  sendPhoto(client: WebSocket, base64: string, mimeType: string): void {
+    const session = this.sessions.get(client)
+    if (!session) return
+    session.geminiSession.sendClientContent({
       turns: [
         {
           role: 'user',
           parts: [
-            {
-              text: resumeContext ? '(유튜브 시청 후 복귀)' : '(대화 시작)'
-            }
+            { inlineData: { data: base64, mimeType } },
+            { text: '(사진 전송)' }
           ]
         }
       ],

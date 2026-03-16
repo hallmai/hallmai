@@ -56,7 +56,11 @@ export function useVoice(deviceUuid: string | null) {
   }, [])
 
   const start = useCallback(
-    async (options?: { resumeFrom?: number }) => {
+    async (options?: {
+      resumeFrom?: number
+      photoBase64?: string
+      photoMimeType?: string
+    }) => {
       if (!deviceUuid) return
       setError(null)
       setSilenceWarning(false)

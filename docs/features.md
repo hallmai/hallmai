@@ -26,6 +26,7 @@
 | F-41 | 관계 정립 (호칭/말투) | explore 단계에서 호칭 질문, Soul에 callerName/speechStyle 저장, 기본 존댓말 |
 | F-42 | 대화 요약에 일시 포함 | 상대 시간 라벨(오늘/어제/N일 전), AI가 시간 감각에 맞는 응답 생성 |
 | F-43 | 장기 대화 세션 갱신 | 10턴마다 Gemini 세션 교체, 요약+Soul 유지, 사용자에게 투명 |
+| F-44 | 카메라 핫키 | 사진 찍어서 AI에게 보여주고 대화 시작. Gemini Live API sendClientContent inlineData |
 
 ## Backlog — Ready (16)
 

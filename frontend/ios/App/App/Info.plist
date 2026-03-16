@@ -40,5 +40,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>사진을 찍어서 AI와 대화할 수 있어요</string>
 </dict>
 </plist>

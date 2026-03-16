@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Search, Youtube, Sun, Newspaper, Music, BookOpen, Dumbbell, HelpCircle } from "lucide-react";
+import { Camera, Search, Youtube, Sun, Newspaper, Music, BookOpen, HelpCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useI18n, type DictionaryKey } from "@/lib/i18n";
 import { useDevice } from "@/hooks/use-device";
 import { useVoice } from "@/hooks/use-voice";
 import { useCallState } from "@/contexts/call-state";
 import { isTokenValid } from "@/lib/auth";
+import { capturePhoto } from "@/lib/camera";
 
 const subscribeAuth = () => () => {};
 const getAuthSnapshot = () => isTokenValid();
@@ -22,13 +23,13 @@ const HOTKEYS: Array<{
   enabled: boolean;
   prompt?: string;
 }> = [
+  { id: "camera", icon: Camera, labelKey: "hotkeyCamera", descKey: "hotkeyCameraDesc", enabled: true },
   { id: "search", icon: Search, labelKey: "hotkeySearch", descKey: "hotkeySearchDesc", enabled: true, prompt: "(검색 요청)" },
   { id: "youtube", icon: Youtube, labelKey: "hotkeyYoutube", descKey: "hotkeyYoutubeDesc", enabled: true, prompt: "(유튜브 검색 요청)" },
   { id: "weather", icon: Sun, labelKey: "hotkeyWeather", descKey: "hotkeyWeatherDesc", enabled: false },
   { id: "news", icon: Newspaper, labelKey: "hotkeyNews", descKey: "hotkeyNewsDesc", enabled: false },
   { id: "music", icon: Music, labelKey: "hotkeyMusic", descKey: "hotkeyMusicDesc", enabled: false },
   { id: "story", icon: BookOpen, labelKey: "hotkeyStory", descKey: "hotkeyStoryDesc", enabled: false },
-  { id: "exercise", icon: Dumbbell, labelKey: "hotkeyExercise", descKey: "hotkeyExerciseDesc", enabled: false },
   { id: "help", icon: HelpCircle, labelKey: "hotkeyHelp", descKey: "hotkeyHelpDesc", enabled: false },
 ];
 
@@ -41,6 +42,7 @@ export default function CallPage() {
   const isLoggedIn = useSyncExternalStore(subscribeAuth, getAuthSnapshot, getServerAuthSnapshot);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const rafRef = useRef(0);
+  const cameraBusyRef = useRef(false);
 
   const animateVolume = useCallback(() => {
     const btn = buttonRef.current;
@@ -79,6 +81,24 @@ export default function CallPage() {
       setCycle((c) => c + 1);
     }
   };
+
+  const handleCameraPress = useCallback(async () => {
+    if (cameraBusyRef.current) return;
+    cameraBusyRef.current = true;
+    try {
+      if (state === "listening" || state === "speaking") {
+        // During call: confirm end, then capture
+        const confirmed = window.confirm(t.cameraEndCallAlert);
+        if (!confirmed) return;
+        await stop();
+      }
+      const photo = await capturePhoto();
+      if (!photo) return;
+      start({ photoBase64: photo.base64, photoMimeType: photo.mimeType });
+    } finally {
+      cameraBusyRef.current = false;
+    }
+  }, [state, t.cameraEndCallAlert, stop, start]);
 
   const isError = !!(error && state === "idle");
 
@@ -124,28 +144,37 @@ export default function CallPage() {
         </span>
       )}
 
-      {/* Hotkey grid — animates in/out */}
+      {/* Hotkey grid — always visible */}
       <div
         className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
           isActive ? "max-h-[160px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <div className="pt-12 px-4 grid grid-cols-4 gap-2">
-          {HOTKEYS.map((hk) => (
-            <button
-              key={hk.id}
-              disabled={!hk.enabled}
-              onClick={() => hk.prompt && triggerHotkey(hk.prompt)}
-              className={`pressable flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors ${
-                hk.enabled
-                  ? "text-[#E8725C] active:bg-[#E8725C]/10"
-                  : "text-stone-300 opacity-40"
-              }`}
-            >
-              <hk.icon className="w-5 h-5" strokeWidth={2} />
-              <span className="text-[11px] font-semibold">{t[hk.labelKey]}</span>
-            </button>
-          ))}
+          {HOTKEYS.map((hk) => {
+            const enabledNow = hk.enabled;
+            return (
+              <button
+                key={hk.id}
+                disabled={!enabledNow}
+                onClick={() => {
+                  if (hk.id === "camera") {
+                    void handleCameraPress();
+                  } else if (hk.prompt) {
+                    triggerHotkey(hk.prompt);
+                  }
+                }}
+                className={`pressable flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors ${
+                  enabledNow
+                    ? "text-[#E8725C] active:bg-[#E8725C]/10"
+                    : "text-stone-300 opacity-40"
+                }`}
+              >
+                <hk.icon className="w-5 h-5" strokeWidth={2} />
+                <span className="text-[11px] font-semibold">{t[hk.labelKey]}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

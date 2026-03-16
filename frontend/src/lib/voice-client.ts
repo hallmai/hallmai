@@ -46,7 +46,11 @@ export class VoiceClient {
 
   async connect(
     deviceUuid: string,
-    options?: { resumeFrom?: number }
+    options?: {
+      resumeFrom?: number
+      photoBase64?: string
+      photoMimeType?: string
+    }
   ): Promise<void> {
     if (this.state !== 'idle') return
 
