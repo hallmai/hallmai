@@ -98,4 +98,7 @@
 ## 문서
 
 - docs/specs/v0.2.md — v0.2 MVP 기획서
-- docs/features.md — 피쳐 목록 (F-01 ~ F-25)
+- docs/features.md — 피쳐 목록 (F-01 ~ F-47)
+  - **features.md는 main 브랜치에서만 수정한다. feat 브랜치에서 절대 수정 금지.**
+  - 피쳐 완료 후 Done 이동, 카운트 업데이트 등은 main 머지 후 main에서 직접 수행한다.
+  - 이유: 여러 브랜치에서 동시 수정 시 매번 충돌 발생
