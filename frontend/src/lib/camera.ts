@@ -41,6 +41,7 @@ function captureWeb(): Promise<CameraResult | null> {
       if (resolved) return
       resolved = true
       clearTimeout(timer)
+      input.remove()
       resolve(result)
     }
 
@@ -51,6 +52,8 @@ function captureWeb(): Promise<CameraResult | null> {
     input.type = 'file'
     input.accept = 'image/*'
     input.capture = 'environment'
+    input.style.position = 'fixed'
+    input.style.left = '-9999px'
 
     input.onchange = async () => {
       const file = input.files?.[0]
@@ -66,52 +69,44 @@ function captureWeb(): Promise<CameraResult | null> {
       }
     }
 
+    // Resolve immediately when user dismisses file picker without selecting
+    input.addEventListener('cancel', () => done(null))
+
+    // Append to DOM before clicking — iOS Safari ignores click() on
+    // detached inputs, preventing the file picker from opening.
+    document.body.appendChild(input)
     input.click()
   })
 }
 
-function compressImage(file: File): Promise<CameraResult> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
+async function compressImage(file: File): Promise<CameraResult> {
+  // createImageBitmap respects EXIF orientation, preventing rotated
+  // photos on mobile devices (especially older Android WebViews).
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
 
-    img.onload = () => {
-      URL.revokeObjectURL(url)
+  let width = bmp.width
+  let height = bmp.height
+  if (width > MAX_WIDTH) {
+    height = Math.round((height * MAX_WIDTH) / width)
+    width = MAX_WIDTH
+  }
 
-      let { width, height } = img
-      if (width > MAX_WIDTH) {
-        height = Math.round((height * MAX_WIDTH) / width)
-        width = MAX_WIDTH
-      }
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    bmp.close()
+    throw new Error('Canvas not supported')
+  }
+  ctx.drawImage(bmp, 0, 0, width, height)
+  bmp.close()
 
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('Canvas not supported'))
-        return
-      }
-      ctx.drawImage(img, 0, 0, width, height)
-
-      const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
-      // Release canvas GPU memory on mobile
-      canvas.width = 0
-      canvas.height = 0
-      const idx = dataUrl.indexOf(',')
-      if (idx < 0) {
-        reject(new Error('Invalid data URL'))
-        return
-      }
-      const base64 = dataUrl.substring(idx + 1)
-      resolve({ base64, mimeType: 'image/jpeg' })
-    }
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Failed to load image'))
-    }
-
-    img.src = url
-  })
+  const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+  // Release canvas GPU memory on mobile
+  canvas.width = 0
+  canvas.height = 0
+  const idx = dataUrl.indexOf(',')
+  if (idx < 0) throw new Error('Invalid data URL')
+  return { base64: dataUrl.substring(idx + 1), mimeType: 'image/jpeg' }
 }

@@ -8,10 +8,8 @@ import { useI18n, type DictionaryKey } from "@/lib/i18n";
 import { useDevice } from "@/hooks/use-device";
 import { useVoice } from "@/hooks/use-voice";
 import { useCallState } from "@/contexts/call-state";
-import { isTokenValid } from "@/lib/auth";
+import { isTokenValid, subscribeAuth } from "@/lib/auth";
 import { capturePhoto } from "@/lib/camera";
-
-const subscribeAuth = () => () => {};
 const getAuthSnapshot = () => isTokenValid();
 const getServerAuthSnapshot = () => false;
 
@@ -86,15 +84,25 @@ export default function CallPage() {
     if (cameraBusyRef.current) return;
     cameraBusyRef.current = true;
     try {
-      if (state === "listening" || state === "speaking") {
-        // During call: confirm end, then capture
+      const wasActive = state === "listening" || state === "speaking";
+      if (wasActive) {
         const confirmed = window.confirm(t.cameraEndCallAlert);
         if (!confirmed) return;
-        await stop();
       }
+      // Capture photo BEFORE stop() to preserve user gesture chain.
+      // Mobile browsers require input.click() within the synchronous
+      // context of a user gesture — await stop() breaks this chain and
+      // prevents the file picker from opening on iOS Safari / mobile Chrome.
       const photo = await capturePhoto();
       if (!photo) return;
-      start({ photoBase64: photo.base64, photoMimeType: photo.mimeType });
+      if (wasActive) {
+        await stop();
+      }
+      try {
+        start({ photoBase64: photo.base64, photoMimeType: photo.mimeType });
+      } catch {
+        // start() failure after stop() — user sees idle state, next tap retries
+      }
     } finally {
       cameraBusyRef.current = false;
     }
@@ -305,7 +313,7 @@ export default function CallPage() {
       )}
 
       {/* YouTube player overlay */}
-      {youtubeVideo && (
+      {youtubeVideo && /^[a-zA-Z0-9_-]{11}$/.test(youtubeVideo.videoId) && (
         <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center">
           <div className="w-full max-w-[430px] px-4">
             <div className="flex justify-end mb-2">
