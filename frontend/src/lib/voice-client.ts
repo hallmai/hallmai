@@ -58,13 +58,14 @@ export class VoiceClient {
 
     const token = getAccessToken()
     const url = token ? `${this.wsUrl}?token=${encodeURIComponent(token)}` : this.wsUrl
-    this.ws = new WebSocket(url)
+    const ws = new WebSocket(url)
+    this.ws = ws
 
-    this.ws.onopen = () => {
+    ws.onopen = () => {
       this.send('start', { deviceUuid, ...options })
     }
 
-    this.ws.onmessage = (event) => {
+    ws.onmessage = (event) => {
       try {
         const msg: WsMessage = JSON.parse(event.data as string)
         this.handleMessage(msg)
@@ -73,13 +74,18 @@ export class VoiceClient {
       }
     }
 
-    this.ws.onerror = () => {
+    ws.onerror = () => {
+      if (this.ws !== ws) return
       this.handler.onError('Connection failed')
       this.cleanup()
       this.setState('idle')
     }
 
-    this.ws.onclose = (event) => {
+    ws.onclose = (event) => {
+      // Ignore stale close events from a previous connection.
+      // After disconnect() → connect(), the old ws.close() fires onclose
+      // asynchronously and would otherwise cleanup() the new connection.
+      if (this.ws !== ws) return
       if (event.code === 4001) {
         this.handler.onError('Device not registered')
       }
