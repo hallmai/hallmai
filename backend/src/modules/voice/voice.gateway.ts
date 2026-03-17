@@ -153,7 +153,7 @@ export class VoiceGateway
       // Load soul context + recent summaries in parallel for system prompt
       const [{ profileText, maturity }, recentSummaries] = await Promise.all([
         this.soulService.getProfileWithMaturity(device.id),
-        this.conversationService.getRecentSummaries(device.id, 3)
+        this.conversationService.getRecentSummaries(device.id, 2)
       ])
       this.logger.debug(`Soul maturity: ${maturity} for device ${deviceUuid}`)
       const soulContext = profileText ?? undefined
@@ -203,7 +203,7 @@ export class VoiceGateway
       )
 
       if (hasPhoto) {
-        this.voiceService.sendPhoto(client, photoBase64!, photoMimeType!)
+        this.voiceService.sendPhoto(client, photoBase64, photoMimeType)
       }
 
       // Wire silence timeout to auto-end conversation
@@ -321,7 +321,7 @@ export class VoiceGateway
     // 5. Reload soul context + recent summaries
     const [{ profileText, maturity }, recentSummaries] = await Promise.all([
       this.soulService.getProfileWithMaturity(deviceId),
-      this.conversationService.getRecentSummaries(deviceId, 3)
+      this.conversationService.getRecentSummaries(deviceId, 2)
     ])
 
     // 6. Build resume context from transcript
