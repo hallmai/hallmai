@@ -135,9 +135,6 @@ export class VoiceClient {
         if (msg.data?.data) {
           if (this.state === 'connecting' || this.state === 'listening') {
             this.setState('speaking')
-            if (this.muteUntil === Infinity) {
-              this.muteUntil = Date.now() + 3000
-            }
           }
           this.player?.enqueue(msg.data.data as string)
         }
@@ -180,7 +177,10 @@ export class VoiceClient {
     this.recorder = new AudioRecorder()
     await this.recorder.start(
       (base64) => {
+        // Hard mute: initial wait, session renewal
         if (Date.now() < this.muteUntil) return
+        // Speaker playing → block mic entirely (echo prevention)
+        if (this.player?.isPlayingOrRecent(300)) return
         this.send('audio', { data: base64 })
       },
       this.handler.onVolume
@@ -192,6 +192,7 @@ export class VoiceClient {
   interrupt(): void {
     if (this.state !== 'speaking') return
     this.pendingInterrupt = true
+    this.muteUntil = 0
     this.player?.interrupt()
     this.setState('listening')
   }

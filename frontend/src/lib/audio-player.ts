@@ -41,6 +41,11 @@ export class AudioPlayer {
     this.sources.push(source)
   }
 
+  isPlayingOrRecent(marginMs = 300): boolean {
+    if (!this.audioContext) return false
+    return this.audioContext.currentTime < this.nextStartTime + marginMs / 1000
+  }
+
   interrupt(): void {
     for (const source of this.sources) {
       try {
