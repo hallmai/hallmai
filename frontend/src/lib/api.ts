@@ -29,7 +29,7 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
 }
 
 export async function fetchPublic(path: string): Promise<Response> {
-  return fetch(`${API_URL}${path}`)
+  return fetch(`${API_URL}${path}`);
 }
 
 export interface PostData {

@@ -207,8 +207,9 @@ function GuestSettings({
 function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
   const [enabled, setEnabled] = useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setEnabled(localStorage.getItem("noiseSuppression") === "rnnoise"); }, []);
+  useEffect(() => {
+    setEnabled(localStorage.getItem("noiseSuppression") === "rnnoise");
+  }, []);
 
   const toggle = () => {
     const next = !enabled;
