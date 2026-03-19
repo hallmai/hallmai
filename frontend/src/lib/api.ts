@@ -28,6 +28,10 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   return res;
 }
 
+export async function fetchPublic(path: string): Promise<Response> {
+  return fetch(`${API_URL}${path}`);
+}
+
 export interface PostData {
   pid: string;
   category: string;

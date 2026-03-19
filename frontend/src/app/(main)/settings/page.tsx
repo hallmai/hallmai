@@ -1,7 +1,8 @@
 "use client";
 
-import { useI18n } from "@/lib/i18n";
+import { fetchPublic } from "@/lib/api";
 import { apiGoogleLogin, clearAuth, saveAuth, subscribeAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { useGoogleLogin } from "@react-oauth/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -112,6 +113,9 @@ function LoggedInSettings({
       >
         {t.settingsLogout}
       </button>
+
+      {/* Version Info */}
+      <VersionInfo />
     </>
   );
 }
@@ -188,8 +192,14 @@ function GuestSettings({
       {/* Noise Suppression */}
       <NoiseSuppressionToggle t={t} />
 
+      {/* Device UUID Card (F-38) */}
+      <DeviceUuidCard t={t} />
+
       {/* Legal Links */}
       <LegalLinks t={t} />
+
+      {/* Version Info */}
+      <VersionInfo />
     </>
   );
 }
@@ -225,6 +235,61 @@ function NoiseSuppressionToggle({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
         />
       </button>
     </div>
+  );
+}
+
+function DeviceUuidCard({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
+  const [uuid, setUuid] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setUuid(localStorage.getItem("seniorDeviceUuid")); }, []);
+
+  if (!uuid) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard
+      .writeText(uuid)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {});
+  };
+
+  return (
+    <div className="card px-4 py-3.5 flex items-center justify-between">
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] text-stone-700">{t.settingsDeviceId}</p>
+        <p className="text-[11px] text-stone-400 truncate">{uuid}</p>
+      </div>
+      <button onClick={handleCopy} className="ml-3 text-[12px] font-medium text-[#E8725C] shrink-0">
+        {copied ? t.settingsDeviceIdCopied : t.settingsDeviceIdCopy}
+      </button>
+    </div>
+  );
+}
+
+function VersionInfo() {
+  const [apiVersion, setApiVersion] = useState<string | null>(null);
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+
+  useEffect(() => {
+    fetchPublic("/api/health")
+      .then((r) => r.json())
+      .then((data) => {
+        const v = data?.data?.version ?? data?.version;
+        if (v) setApiVersion(v);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!appVersion) return null;
+
+  return (
+    <p className="text-[11px] text-stone-300 text-center">
+      {appVersion}{apiVersion ? `(${apiVersion})` : ""}
+    </p>
   );
 }
 
